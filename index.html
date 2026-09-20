@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Flower Sellers of Cape Town</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js"></script>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Avenir Next', Avenir, 'Helvetica Neue', sans-serif; background-color: #ffffff; overflow: hidden; }
+        
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        
+        .mapboxgl-ctrl-bottom-left, .mapboxgl-ctrl-bottom-right { display: none !important; }
+        
+        #side-panel {
+            position: absolute; top: 0; right: -750px; width: 720px; max-width: 100vw; height: 100vh;
+            background: #ffffff; box-shadow: -8px 0 32px rgba(0,0,0,0.15); z-index: 10;
+            overflow-y: auto; transition: right 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            display: flex; flex-direction: column;
+        }
+        #side-panel.active { right: 0; }
+        .panel-header { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: rgba(255, 255, 255, 0.95); z-index: 20; border-bottom: 1px solid #eee; }
+        .back-btn { background: none; border: none; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: #1e88e5; cursor: pointer; display: none; padding: 0; }
+        .back-btn:hover { text-decoration: underline; }
+        .close-btn { background: none; border: none; font-size: 28px; color: #888; cursor: pointer; line-height: 1; padding: 0; }
+        .close-btn:hover { color: #111; }
+        #panel-content { padding: 32px; }
+        
+        .sheet-image-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 24px; }
+        .sheet-hero-img { width: 100%; height: 220px; background: #e0e0e0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: #777; text-transform: uppercase; letter-spacing: 1.5px; overflow: hidden; }
+        .sheet-sub-stack { display: flex; flex-direction: column; gap: 12px; }
+        .sheet-thumb-img { width: 100%; height: 104px; background: #e0e0e0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; color: #777; text-transform: uppercase; letter-spacing: 1.5px; overflow: hidden; }
+
+        .sheet-title-area { margin-bottom: 28px; border-bottom: 1px solid #111; padding-bottom: 16px; }
+        .sheet-title-area h2 { margin: 0 0 6px 0; font-size: 28px; font-weight: 500; letter-spacing: 1px; color: #111; }
+        .sheet-subtitle { font-size: 14px; font-weight: 500; font-style: italic; letter-spacing: 1px; color: #666; margin: 0; }
+        .sheet-body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+        .sheet-story-col h4 { margin: 0 0 12px 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: #111; }
+        .sheet-story-col .italic-lead { font-style: italic; font-size: 13px; font-weight: 400; color: #555; margin-bottom: 16px; line-height: 1.5; }
+        .legal-note { font-size: 11px; font-weight: 400; line-height: 1.5; color: #666; margin-bottom: 10px; }
+        .legal-note strong { color: #222; font-weight: 600; }
+        .history-text { font-size: 13px; font-weight: 400; line-height: 1.6; color: #444; margin: 0; white-space: pre-wrap; }
+
+        .sheet-meta-col { display: flex; flex-direction: column; gap: 20px; }
+        .meta-block { border-bottom: 1px solid #e0e0e0; padding-bottom: 14px; }
+        .meta-block:last-child { border-bottom: none; }
+        .meta-block h4 { margin: 0 0 6px 0; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: #888; }
+        .meta-block p { margin: 0; font-size: 13px; font-weight: 400; line-height: 1.5; color: #222; }
+
+        .profile-data-group { margin-bottom: 24px; }
+        .profile-data-group h4 { font-size: 12px; font-weight: 600; letter-spacing: 2px; color: #111; margin: 0 0 12px 0; border-bottom: 1px solid #111; padding-bottom: 6px; text-transform: uppercase; }
+        .profile-data-row { display: flex; font-size: 12px; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 6px;}
+        .profile-data-label { flex: 0 0 140px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; font-size: 10px; padding-right: 12px; border-right: 1px solid #ddd; margin-right: 12px; display: flex; align-items: center;}
+        .profile-data-value { flex: 1; color: #222; font-weight: 500; line-height: 1.4; }
+
+        .profile-link { color: #1e88e5; text-decoration: none; font-weight: 600; cursor: pointer; }
+        .profile-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="side-panel">
+    <div class="panel-header">
+        <button class="back-btn" id="back-btn" onclick="goBackToSite()">&#8592; Back to Site Profile</button>
+        <button class="close-btn" onclick="closePanel()">&times;</button>
+    </div>
+    <div id="panel-content"></div>
+</div>
+
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1Ijoicm9iYmllZmlldHplIiwiYSI6ImNsc3VkNHRzZTB0ZG8yanFzd3pubW0xNXoifQ.TakuctOmgJPScAAz_DGhZQ';
+
+    const map = new mapboxgl.Map({
+        container: 'map', 
+        style: 'mapbox://styles/robbiefietze/cmu7ax4ce003x01qtdob3c74u', 
+        center: [18.55, -34.135], 
+        zoom: 10, 
+        maxBounds: [ [17.50, -35.00], [19.50, -33.00] ],
+        minZoom: 8,
+        attributionControl: false
+    });
+
+    let currentSiteData = null;
+
+    function closePanel() {
+        document.getElementById('side-panel').classList.remove('active');
+        document.getElementById('back-btn').style.display = 'none';
+    }
+
+    function openCharlesProfile() {
+        currentSiteData = document.getElementById('panel-content').innerHTML;
+        document.getElementById('back-btn').style.display = 'block';
+
+        const charlesHTML = `
+            <div class="sheet-image-grid">
+                <div class="sheet-hero-img" style="background: #f8ecec;">[ Self Portrait ]</div>
+                <div class="sheet-sub-stack">
+                    <div class="sheet-thumb-img" style="background: #f8ecec;">[ Context Image 1 ]</div>
+                    <div class="sheet-thumb-img" style="background: #f8ecec;">[ Context Image 2 ]</div>
+                </div>
+            </div>
+            <div class="sheet-title-area">
+                <h2>Mr. Charles Jaftha</h2>
+                <p class="sheet-subtitle">Agricultural Flower Farmer</p>
+            </div>
+            <div class="sheet-body-grid">
+                <div class="sheet-story-col">
+                    <h4>Short Story</h4>
+                    <p class="history-text">I am Charles Jaftha, son of Moses Jaftha. Together with my brother Malcom, we have continued to farm flowers in Constantia. My efforts are involved in preserving the history and heritage of the Constantia Flower Farmers through Heritage walks and education. I think that people need to know the history of this place and understand the heritage of the Flower Farmers.</p>
+                </div>
+                <div class="sheet-meta-col">
+                    <div class="profile-data-group">
+                        <h4>Location Data</h4>
+                        <div class="profile-data-row"><span class="profile-data-label">Historic Residence</span><span class="profile-data-value">Violet Lane, Constantia</span></div>
+                        <div class="profile-data-row"><span class="profile-data-label">Current Residence</span><span class="profile-data-value">Parkwood</span></div>
+                        <div class="profile-data-row"><span class="profile-data-label">Place of Work</span><span class="profile-data-value">Jaftha's Flower Farm, Spaanschemat River Road</span></div>
+                    </div>
+                    <div class="profile-data-group">
+                        <h4>Trade Data</h4>
+                        <div class="profile-data-row"><span class="profile-data-label">Active Years</span><span class="profile-data-value">1972 – Current</span></div>
+                        <div class="profile-data-row"><span class="profile-data-label">Source / Suppliers</span><span class="profile-data-value">Soil for life etc.</span></div>
+                        <div class="profile-data-row"><span class="profile-data-label">Signature Flowers</span><span class="profile-data-value">Dahlia's, Water Lilies, Lupines, Dianthus</span></div>
+                    </div>
+                    <div class="profile-data-group">
+                        <h4>Relational Data</h4>
+                        <div class="profile-data-row"><span class="profile-data-label">Family Links</span><span class="profile-data-value">Moses Jaftha (Father), Malcom Jaftha (Brother)</span></div>
+                        <div class="profile-data-row"><span class="profile-data-label">Age</span><span class="profile-data-value">-</span></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('panel-content').innerHTML = charlesHTML;
+        document.getElementById('side-panel').scrollTop = 0;
+    }
+
+    function goBackToSite() {
+        if (currentSiteData) {
+            document.getElementById('panel-content').innerHTML = currentSiteData;
+            document.getElementById('back-btn').style.display = 'none';
+            document.getElementById('side-panel').scrollTop = 0;
+        }
+    }
+
+    map.on('load', () => {
+        
+        map.addSource('historic-zones', {
+            'type': 'geojson',
+            'data': {
+                'type': 'FeatureCollection',
+                'features': [
+                    {
+                        'type': 'Feature',
+                        'properties': { 'name': 'Strawberry Lane', 'zone': 'strawberry' },
+                        'geometry': {
+                            'type': 'Polygon',
+                            'coordinates': [[
+                                [18.436927, -34.032587], [18.436655, -34.032879], [18.436535, -34.033617], [18.436089, -34.034353],
+                                [18.436328, -34.034713], [18.437797, -34.037121], [18.439426, -34.040350], [18.440676, -34.041402],
+                                [18.442153, -34.043266], [18.444173, -34.044385], [18.445077, -34.044168], [18.444317, -34.042452],
+                                [18.444123, -34.040987], [18.443465, -34.040648], [18.442960, -34.038583], [18.442498, -34.037654],
+                                [18.442244, -34.037263], [18.441806, -34.036024], [18.441523, -34.035165], [18.441008, -34.034083],
+                                [18.440865, -34.033560], [18.440460, -34.032848], [18.440339, -34.032421], [18.439951, -34.031503],
+                                [18.440063, -34.031163], [18.439927, -34.030760], [18.439433, -34.030356], [18.436927, -34.032587]
+                            ]]
+                        }
+                    },
+                    {
+                        'type': 'Feature',
+                        'properties': { 'name': 'Violet Lane', 'zone': 'violet' },
+                        'geometry': {
+                            'type': 'Polygon',
+                            'coordinates': [[
+                                [18.439475, -34.030351], [18.439954, -34.030741], [18.440085, -34.031156], [18.439981, -34.031524],
+                                [18.440364, -34.032409], [18.440663, -34.033139], [18.440889, -34.033549], [18.441030, -34.034076],
+                                [18.441058, -34.034142], [18.441547, -34.035159], [18.442257, -34.037227], [18.442992, -34.038572],
+                                [18.443490, -34.040592], [18.444037, -34.040887], [18.444845, -34.040917], [18.444874, -34.040147],
+                                [18.444480, -34.039118], [18.444288, -34.037681], [18.444287, -34.037332], [18.444349, -34.036327],
+                                [18.444624, -34.035530], [18.445237, -34.035017], [18.446215, -34.034666], [18.444949, -34.032552],
+                                [18.443435, -34.030151], [18.442714, -34.030440], [18.441814, -34.030374], [18.440162, -34.030177],
+                                [18.439475, -34.030351]
+                            ]]
+                        }
+                    },
+                    {
+                        'type': 'Feature',
+                        'properties': { 'name': "Jaftha's Flower Farm", 'zone': 'jaftha-farm' },
+                        'geometry': {
+                            'type': 'Polygon',
+                            'coordinates': [[
+                                [18.438889, -34.029812], [18.439309, -34.029509], [18.439138, -34.028590],
+                                [18.438162, -34.028770], [18.437922, -34.028970], [18.438889, -34.029812]
+                            ]]
+                        }
+                    },
+                    {
+                        'type': 'Feature',
+                        'properties': { 'name': 'Adderley Street Flower Market', 'zone': 'market' },
+                        'geometry': {
+                            'type': 'Polygon',
+                            'coordinates': [[
+                                [18.422216, -33.923080], [18.422122, -33.923171], [18.422682, -33.923574],
+                                [18.422756, -33.923504], [18.422216, -33.923080]
+                            ]]
+                        }
+                    },
+                    {
+                        'type': 'Feature',
+                        'properties': { 'name': 'New Oranjezicht Market', 'zone': 'market' },
+                        'geometry': {
+                            'type': 'Polygon',
+                            'coordinates': [[
+                                [18.418079, -33.902463], [18.417186, -33.903062], [18.417561, -33.903424],
+                                [18.418434, -33.902802], [18.418079, -33.902463]
+                            ]]
+                        }
+                    },
+                    {
+                        'type': 'Feature',
+                        'properties': { 'name': 'Old Oranjezicht Market', 'zone': 'market' },
+                        'geometry': {
+                            'type': 'Polygon',
+                            'coordinates': [[
+                                [18.414666, -33.902349], [18.415392, -33.902694], [18.415600, -33.902373],
+                                [18.414775, -33.901949], [18.414452, -33.902183], [18.414666, -33.902349]
+                            ]]
+                        }
+                    }
+                ]
+            }
+        });
+
+        map.addLayer({
+            'id': 'historic-zones-fill', 'type': 'fill', 'source': 'historic-zones',
+            'paint': {
+                'fill-color': ['match', ['get', 'zone'], 'strawberry', '#ff4d4d', 'violet', '#7b1fa2', 'jaftha-farm', '#26a7ff', 'market', '#ffb300', '#cccccc'],
+                'fill-opacity': 0.20
+            }
+        });
+
+        map.addLayer({
+            'id': 'historic-zones-line', 'type': 'line', 'source': 'historic-zones',
+            'paint': {
+                'line-color': ['match', ['get', 'zone'], 'strawberry', '#d32f2f', 'violet', '#512da8', 'jaftha-farm', '#007cf5', 'market', '#ff8f00', '#cccccc'],
+                'line-width': 2, 'line-dasharray': [3, 3]
+            }
+        });
+
+        map.addSource('mask-source', {
+            'type': 'geojson',
+            'data': {
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [
+                        [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]],
+                        [[18.26, -34.38], [18.26, -33.89], [18.84, -33.89], [18.84, -34.38], [18.26, -34.38]]
+                    ]
+                }
+            }
+        });
+        map.addLayer({ 'id': 'mask-layer', 'type': 'fill', 'source': 'mask-source', 'paint': { 'fill-color': '#ffffff', 'fill-opacity': 1.0 } });
+        map.addLayer({ 'id': 'mask-outline', 'type': 'line', 'source': 'mask-source', 'paint': { 'line-color': '#cccccc', 'line-width': 1 } });
+        
+        map.addSource('flower-network', {
+            type: 'geojson',
+            data: {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "LineString", "coordinates": [[18.442722, -34.034806], [18.497361, -34.030278]] },
+                        "properties": { "category": "displacement-vector" }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [18.442722, -34.034806] },
+                        "properties": {
+                            "category": "person-historic",
+                            "name": "Mr. Charles Jaftha",
+                            "subtitle": "Agricultural Flower Farmer",
+                            "story": "I am Charles Jaftha, son of Moses Jaftha. Together with my brother Malcom, we have continued to farm flowers in Constantia. My efforts are involved in preserving the history and heritage of the Constantia Flower Farmers through Heritage walks and education.",
+                            "hist_res": "Violet Lane, Constantia", "curr_res": "Parkwood", "workplace": "Jaftha's Flower Farm, Spaanschemat River Road",
+                            "family_links": "Moses Jaftha (Father), Malcom Jaftha (Brother)", 
+                            "age": "-", 
+                            "active": "1972 – Current", "suppliers": "Soil for life etc.", "flowers": "Dahlia's, Water Lilies, Lupines, Dianthus"
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [18.497361, -34.030278] },
+                        "properties": {
+                            "category": "person-current",
+                            "name": "Mr. Charles Jaftha",
+                            "subtitle": "Agricultural Flower Farmer",
+                            "story": "I am Charles Jaftha, son of Moses Jaftha. Together with my brother Malcom, we have continued to farm flowers in Constantia. My efforts are involved in preserving the history and heritage of the Constantia Flower Farmers through Heritage walks and education.",
+                            "hist_res": "Violet Lane, Constantia", "curr_res": "Parkwood", "workplace": "Jaftha's Flower Farm, Spaanschemat River Road",
+                            "family_links": "Moses Jaftha (Father), Malcom Jaftha (Brother)", 
+                            "age": "-", 
+                            "active": "1972 – Current", "suppliers": "Soil for life etc.", "flowers": "Dahlia's, Water Lilies, Lupines, Dianthus"
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [18.4386, -34.0292] },
+                        "properties": {
+                            "category": "site-profile",
+                            "name": "Jaftha's Flower Farm",
+                            "subtitle": "Agricultural Flower Farm",
+                            "italic_desc": "Traditional outdoor flower farming, seed-banking, and hosting memory work with CHEP.",
+                            "location_text": "Jaftha Flower Farm (Spaanschemat River plot, Constantia)",
+                            "activity_text": "Cultivating and growing flowers (dahlias, freesias, lupines) and trading with Adderley Street market.",
+                            "dates_text": "Pre-1960s (Historic) / Returned 1980s – Present",
+                            "people_list": '<span class="profile-link" onclick="openCharlesProfile()">Charles Jaftha</span> (Owner), Malcom Jaftha (Owner), Moses Jaftha (Founder)'
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [18.4385, -34.0335] },
+                        "properties": {
+                            "category": "site-profile",
+                            "name": "Strawberry Lane Settlement",
+                            "subtitle": "Historic Smallholding & Farming Community",
+                            "italic_desc": "A vibrant pre-Apartheid smallholding community where families practiced subsistence farming, raised livestock, and grew cut flowers.",
+                            "location_text": "Strawberry Lane, Constantia Valley",
+                            "activity_text": "Small-scale farming, flower cultivation, pig and poultry raising, and supplying local markets.",
+                            "dates_text": "Pre-1961 (Disestablished prior to Group Areas Act forced removals)",
+                            "people_list": "Various displaced farming families and flower vendors."
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [18.4420, -34.0330] },
+                        "properties": {
+                            "category": "site-profile",
+                            "name": "Violet Lane Settlement",
+                            "subtitle": "Historic Cut Flower Farming Enclave",
+                            "italic_desc": "An intensely cultivated residential and agricultural lane home to families who specialized in growing seasonal cut flowers.",
+                            "location_text": "Violet Lane, Constantia Valley",
+                            "activity_text": "Growing dahlias, freesias, arum lilies, and native fynbos for city distribution.",
+                            "dates_text": "Late 19th Century – 1967 (Cleared under Group Areas Act)",
+                            "people_list": "Appollis Family, Jaftha Family, and surrounding smallholders."
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [18.4224, -33.9233] },
+                        "properties": {
+                            "category": "site-profile",
+                            "name": "Adderley Street Flower Market",
+                            "subtitle": "Historic Urban Flower Market",
+                            "italic_desc": "One of Cape Town's oldest running cultural institutions, operating continuously since the 1880s at Trafalgar Place.",
+                            "location_text": "Trafalgar Place, Adderley Street, Central Cape Town",
+                            "activity_text": "Retail and wholesale trade of local 'small flowers', fynbos, and seasonal arrangements.",
+                            "dates_text": "1880s – Present Day",
+                            "people_list": "Generations of independent vendors and family-run trading stalls."
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [18.4178, -33.9029] },
+                        "properties": {
+                            "category": "site-profile",
+                            "name": "New Oranjezicht Market",
+                            "subtitle": "Modern Urban Agroecology & Flower Hub",
+                            "italic_desc": "A contemporary revival of urban agriculture, community farming, and local artisanal flower distribution.",
+                            "location_text": "Granger Bay, Cape Town",
+                            "activity_text": "Hosting local seasonal flower stalls, urban farming training, and agroecology markets.",
+                            "dates_text": "2012 – Present Day",
+                            "people_list": "Urban farmers, regional growers, and local food movements."
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [18.4150, -33.9022] },
+                        "properties": {
+                            "category": "site-profile",
+                            "name": "Old Oranjezicht Market",
+                            "subtitle": "Historic Agricultural & Market Site",
+                            "italic_desc": "The foundational agricultural node connected to the historic Oranjezicht farm estate supplying early Cape Town markets.",
+                            "location_text": "Oranjezicht, Table Mountain Slopes",
+                            "activity_text": "Early market gardening, vegetable and flower cultivation supplying the inner-city trade networks.",
+                            "dates_text": "17th Century – 20th Century",
+                            "people_list": "Historic estate laborers, early market gardeners, and agricultural traders."
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": { 
+                            "type": "LineString", 
+                            "coordinates": [
+                                [18.8400, -33.9355], 
+                                [18.4201, -33.9355]
+                            ] 
+                        },
+                        "properties": { "category": "displacement-vector" }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [18.8400, -33.9355] },
+                        "properties": {
+                            "category": "person-historic",
+                            "name": "Mr. Robert Fietze",
+                            "subtitle": "Researcher",
+                            "story": "I am currently completing my honors degree at the University of Cape Town. My profile exists in this archive purely to trial the functionality of the webpage to see how the data works, how it is received and how it is reflected in the historic archive. I have no personal relationship to the flower network besides my interest in archiving and contributing to the preservation of this heritage.",
+                            "hist_res": "Glen Thorn Farm, Tylden, Eastern Cape, South Africa",
+                            "curr_res": "Schoonder street, Gardens, Cape Town",
+                            "workplace": "University of Cape Town",
+                            "family_links": "-",
+                            "age": "-",
+                            "active": "-",
+                            "suppliers": "-",
+                            "flowers": "-",
+                            "profile_image": "https://drive.google.com/open?id=17KODvXtkDQEdzy0C748TdSteSjqUtPc8",
+                            "archive_images": "https://drive.google.com/open?id=1Ia99W_ov8pUC7RW12AHDEzT673RRFLEc, https://drive.google.com/open?id=1awiXCQQ4wLGM3MCtRLSC3RXKZ9eMDOnw"
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [18.4201, -33.9355] },
+                        "properties": {
+                            "category": "person-current",
+                            "name": "Mr. Robert Fietze",
+                            "subtitle": "Researcher",
+                            "story": "I am currently completing my honors degree at the University of Cape Town. My profile exists in this archive purely to trial the functionality of the webpage to see how the data works, how it is received and how it is reflected in the historic archive. I have no personal relationship to the flower network besides my interest in archiving and contributing to the preservation of this heritage.",
+                            "hist_res": "Glen Thorn Farm, Tylden, Eastern Cape, South Africa",
+                            "curr_res": "Schoonder street, Gardens, Cape Town",
+                            "workplace": "University of Cape Town",
+                            "family_links": "-",
+                            "age": "-",
+                            "active": "-",
+                            "suppliers": "-",
+                            "flowers": "-",
+                            "profile_image": "https://drive.google.com/open?id=17KODvXtkDQEdzy0C748TdSteSjqUtPc8",
+                            "archive_images": "https://drive.google.com/open?id=1Ia99W_ov8pUC7RW12AHDEzT673RRFLEc, https://drive.google.com/open?id=1awiXCQQ4wLGM3MCtRLSC3RXKZ9eMDOnw"
+                        }
+                    }
+                ]
+            }
+        });
+
+        map.addLayer({
+            'id': 'displacement-lines', 'type': 'line', 'source': 'flower-network',
+            'filter': ['==', 'category', 'displacement-vector'],
+            'paint': { 'line-color': '#d81b60', 'line-width': 1.5, 'line-dasharray': [3, 3], 'line-opacity': 0.6 }
+        });
+
+        map.addLayer({
+            'id': 'network-points', 'type': 'circle', 'source': 'flower-network',
+            'filter': ['!=', 'category', 'displacement-vector'], 
+            'paint': {
+                'circle-radius': 8,
+                'circle-color': ['match', ['get', 'category'], 
+                    'site-profile', '#1e88e5', 
+                    'person-current', '#d81b60', 
+                    'person-historic', 'transparent', 
+                    '#cccccc'
+                ],
+                'circle-stroke-width': 2,
+                'circle-stroke-color': ['match', ['get', 'category'], 'person-historic', '#d81b60', '#ffffff']
+            }
+        });
+
+        // Helper function to extract Google Drive ID and return direct image content URL
+        function makeDirectLink(url) {
+            if (!url) return null;
+            let cleanLink = url.trim();
+            let idMatch = cleanLink.match(/id=([a-zA-Z0-9_-]+)/);
+            if (idMatch && idMatch[1]) {
+                return 'https://lh3.googleusercontent.com/d/' + idMatch[1];
+            }
+            return cleanLink;
+        }
+
+        map.on('click', 'network-points', (e) => {
+            const coordinates = e.features[0].geometry.coordinates.slice();
+            const props = e.features[0].properties;
+            const category = props.category;
+            
+            map.flyTo({ center: coordinates, speed: 1.2, offset: [-200, 0] });
+            document.getElementById('back-btn').style.display = 'none';
+
+            let panelHTML = '';
+
+            if (category === 'person-current' || category === 'person-historic') {
+                
+                let heroImage = `[ Self Portrait / Profile Photograph ]`;
+                if (props.profile_image) {
+                    let directHero = makeDirectLink(props.profile_image);
+                    heroImage = `<img src="${directHero}" style="width: 100%; height: 100%; object-fit: cover;" alt="Self Portrait">`;
+                }
+
+                let thumb1 = `[ Historic Archive / Context Image 1 ]`;
+                let thumb2 = `[ Historic Archive / Context Image 2 ]`;
+                if (props.archive_images) {
+                    let imgUrls = props.archive_images.split(',');
+                    if (imgUrls[0]) {
+                        let d1 = makeDirectLink(imgUrls[0]);
+                        thumb1 = `<img src="${d1}" style="width: 100%; height: 100%; object-fit: cover;" alt="Archive Image 1">`;
+                    }
+                    if (imgUrls[1]) {
+                        let d2 = makeDirectLink(imgUrls[1]);
+                        thumb2 = `<img src="${d2}" style="width: 100%; height: 100%; object-fit: cover;" alt="Archive Image 2">`;
+                    }
+                }
+
+                panelHTML = `
+                    <div class="sheet-image-grid">
+                        <div class="sheet-hero-img" style="background: #f8ecec;">
+                            ${heroImage}
+                        </div>
+                        <div class="sheet-sub-stack">
+                            <div class="sheet-thumb-img" style="background: #f8ecec;">${thumb1}</div>
+                            <div class="sheet-thumb-img" style="background: #f8ecec;">${thumb2}</div>
+                        </div>
+                    </div>
+                    <div class="sheet-title-area">
+                        <h2>${props.name}</h2>
+                        <p class="sheet-subtitle">${props.subtitle}</p>
+                    </div>
+                    <div class="sheet-body-grid">
+                        <div class="sheet-story-col">
+                            <h4>Short Story</h4>
+                            <p class="history-text">${props.story}</p>
+                        </div>
+                        <div class="sheet-meta-col">
+                            <div class="profile-data-group">
+                                <h4>Location Data</h4>
+                                <div class="profile-data-row"><span class="profile-data-label">Historic Residence</span><span class="profile-data-value">${props.hist_res}</span></div>
+                                <div class="profile-data-row"><span class="profile-data-label">Current Residence</span><span class="profile-data-value">${props.curr_res}</span></div>
+                                <div class="profile-data-row"><span class="profile-data-label">Place of Work</span><span class="profile-data-value">${props.workplace}</span></div>
+                            </div>
+                            <div class="profile-data-group">
+                                <h4>Trade Data</h4>
+                                <div class="profile-data-row"><span class="profile-data-label">Active Years</span><span class="profile-data-value">${props.active || '-'}</span></div>
+                                <div class="profile-data-row"><span class="profile-data-label">Source / Suppliers</span><span class="profile-data-value">${props.suppliers || '-'}</span></div>
+                                <div class="profile-data-row"><span class="profile-data-label">Signature Flowers</span><span class="profile-data-value">${props.flowers || '-'}</span></div>
+                            </div>
+                            <div class="profile-data-group">
+                                <h4>Relational Data</h4>
+                                <div class="profile-data-row"><span class="profile-data-label">Family Links</span><span class="profile-data-value">${props.family_links || '-'}</span></div>
+                                <div class="profile-data-row"><span class="profile-data-label">Age</span><span class="profile-data-value">${props.age || '-'}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (category === 'site-profile') {
+                panelHTML = `
+                    <div class="sheet-image-grid">
+                        <div class="sheet-hero-img">[ Site Aerial Photo / Landscape Archive ]</div>
+                        <div class="sheet-sub-stack">
+                            <div class="sheet-thumb-img">[ Context View ]</div>
+                            <div class="sheet-thumb-img">[ Detail View ]</div>
+                        </div>
+                    </div>
+                    <div class="sheet-title-area">
+                        <h2>${props.name}</h2>
+                        <p class="sheet-subtitle">${props.subtitle}</p>
+                    </div>
+                    <div class="sheet-body-grid">
+                        <div class="sheet-story-col">
+                            <h4>Story</h4>
+                            <div class="italic-lead">${props.italic_desc}</div>
+                        </div>
+                        <div class="sheet-meta-col">
+                            <div class="meta-block">
+                                <h4>Location</h4>
+                                <p>${props.location_text}</p>
+                            </div>
+                            <div class="meta-block">
+                                <h4>Activity</h4>
+                                <p>${props.activity_text}</p>
+                            </div>
+                            <div class="meta-block">
+                                <h4>People & Community</h4>
+                                <p>${props.people_list || 'Historical community members and independent traders.'}</p>
+                            </div>
+                            <div class="meta-block">
+                                <h4>Dates</h4>
+                                <p>${props.dates_text}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('panel-content').innerHTML = panelHTML;
+            document.getElementById('side-panel').classList.add('active');
+            currentSiteData = panelHTML;
+        });
+
+        map.on('click', (e) => {
+            const features = map.queryRenderedFeatures(e.point, { layers: ['network-points'] });
+            if (!features.length) { closePanel(); }
+        });
+
+        map.on('mouseenter', 'network-points', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'network-points', () => { map.getCanvas().style.cursor = ''; });
+    });
+</script>
+
+</body>
+</html>
