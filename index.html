@@ -468,14 +468,26 @@
             }
         });
 
-        // Upgraded helper function to extract Google Drive ID from both ?id= and /file/d/ formats
+        // Helper function for Google Drive Images
         function makeDirectLink(url) {
             if (!url) return null;
             let cleanLink = url.trim();
-            // Matches either 'id=' or '/d/' followed by the unique file ID
             let idMatch = cleanLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
             if (idMatch && idMatch[1]) {
                 return 'https://lh3.googleusercontent.com/d/' + idMatch[1];
+            }
+            return cleanLink;
+        }
+
+        // Upgraded Helper function for Google Drive Audio streaming via CORS Proxy
+        function makeAudioLink(url) {
+            if (!url) return null;
+            let cleanLink = url.trim();
+            let idMatch = cleanLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+            if (idMatch && idMatch[1]) {
+                // Using an open CORS proxy stream decoder to bypass Google's audio block
+                let rawDriveUrl = 'https://drive.google.com/uc?export=download&id=' + idMatch[1];
+                return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(rawDriveUrl);
             }
             return cleanLink;
         }
@@ -515,11 +527,11 @@
                 // Dynamic Audio Player Block
                 let audioBlock = '';
                 if (props.audio_url) {
-                    let directAudio = makeDirectLink(props.audio_url);
+                    let directAudio = makeAudioLink(props.audio_url);
                     audioBlock = `
                         <div class="audio-container">
                             <h5>Oral Testimony / Audio Recording</h5>
-                            <audio controls>
+                            <audio controls preload="metadata">
                                 <source src="${directAudio}" type="audio/mpeg">
                                 Your browser does not support the audio element.
                             </audio>
