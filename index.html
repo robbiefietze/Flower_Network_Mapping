@@ -37,9 +37,8 @@
         .sheet-subtitle { font-size: 14px; font-weight: 500; font-style: italic; letter-spacing: 1px; color: #666; margin: 0; }
         .sheet-body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
         .sheet-story-col h4 { margin: 0 0 12px 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: #111; }
-        .sheet-story-col .italic-lead { font-style: italic; font-size: 13px; font-weight: 400; color: #555; margin-bottom: 16px; line-height: 1.5; }
         .history-text { font-size: 13px; font-weight: 400; line-height: 1.6; color: #444; margin-bottom: 20px; white-space: pre-wrap; }
-        
+
         /* Audio Player Styling */
         .audio-container { margin-top: 16px; padding: 14px; background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 4px; }
         .audio-container h5 { margin: 0 0 8px 0; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: #555; }
@@ -418,7 +417,7 @@
                             "flowers": "-",
                             "profile_image": "https://drive.google.com/open?id=17KODvXtkDQEdzy0C748TdSteSjqUtPc8",
                             "archive_images": "https://drive.google.com/open?id=1Ia99W_ov8pUC7RW12AHDEzT673RRFLEc, https://drive.google.com/open?id=1awiXCQQ4wLGM3MCtRLSC3RXKZ9eMDOnw",
-                            "audio_url": "https://drive.google.com/file/d/1WpzLdYh5cK6DisCXrcaB9xqw_7CSfpjs/view?usp=sharing"
+                            "has_audio": "yes"
                         }
                     },
                     {
@@ -439,7 +438,7 @@
                             "flowers": "-",
                             "profile_image": "https://drive.google.com/open?id=17KODvXtkDQEdzy0C748TdSteSjqUtPc8",
                             "archive_images": "https://drive.google.com/open?id=1Ia99W_ov8pUC7RW12AHDEzT673RRFLEc, https://drive.google.com/open?id=1awiXCQQ4wLGM3MCtRLSC3RXKZ9eMDOnw",
-                            "audio_url": "https://drive.google.com/file/d/1WpzLdYh5cK6DisCXrcaB9xqw_7CSfpjs/view?usp=sharing"
+                            "has_audio": "yes"
                         }
                     }
                 ]
@@ -479,19 +478,6 @@
             return cleanLink;
         }
 
-        // Upgraded Helper function for Google Drive Audio streaming via CORS Proxy
-        function makeAudioLink(url) {
-            if (!url) return null;
-            let cleanLink = url.trim();
-            let idMatch = cleanLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
-            if (idMatch && idMatch[1]) {
-                // Using an open CORS proxy stream decoder to bypass Google's audio block
-                let rawDriveUrl = 'https://drive.google.com/uc?export=download&id=' + idMatch[1];
-                return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(rawDriveUrl);
-            }
-            return cleanLink;
-        }
-
         map.on('click', 'network-points', (e) => {
             const coordinates = e.features[0].geometry.coordinates.slice();
             const props = e.features[0].properties;
@@ -520,19 +506,20 @@
                     }
                     if (imgUrls[1]) {
                         let d2 = makeDirectLink(imgUrls[1]);
-                        thumb2 = `<img src="${d2}" style="width: 100%; height: 100%; object-fit: cover;" alt="Archive Image 2">`;
+                        thumb2 = `<img src="${d2}" style="width: 100%5; height: 100%; object-fit: cover;" alt="Archive Image 2">`;
                     }
                 }
 
-                // Dynamic Audio Player Block
+                // GitHub Audio Integration for root directory file
                 let audioBlock = '';
-                if (props.audio_url) {
-                    let directAudio = makeAudioLink(props.audio_url);
+                if (props.has_audio === "yes") {
+                    let githubAudioUrl = `https://raw.githubusercontent.com/robbiefietze/flower-map/main/Robert%20Fietze_Audio.m4a`;
+
                     audioBlock = `
                         <div class="audio-container">
                             <h5>Oral Testimony / Audio Recording</h5>
                             <audio controls preload="metadata">
-                                <source src="${directAudio}" type="audio/mpeg">
+                                <source src="${githubAudioUrl}" type="audio/mp4">
                                 Your browser does not support the audio element.
                             </audio>
                         </div>
