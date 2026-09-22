@@ -37,6 +37,19 @@
         .menu-section a { color: #1e88e5; text-decoration: none; font-weight: 500; }
         .menu-section a:hover { text-decoration: underline; }
 
+        /* Bottom-Left Static Map Key Styling */
+        #map-legend {
+            position: absolute; bottom: 24px; left: 24px; z-index: 100;
+            background: rgba(255, 255, 255, 0.95); border: 1px solid #e0e0e0;
+            padding: 16px 20px; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+            font-family: 'Avenir Next', Avenir, 'Helvetica Neue', sans-serif; pointer-events: none;
+        }
+        .legend-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #888; margin-bottom: 12px; }
+        .legend-item { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+        .legend-item:last-child { margin-bottom: 0; }
+        .legend-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+        .legend-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: #111; }
+
         #side-panel {
             position: absolute; top: 0; right: -750px; width: 720px; max-width: 100vw; height: 100vh;
             background: #ffffff; box-shadow: -8px 0 32px rgba(0,0,0,0.15); z-index: 10;
@@ -112,6 +125,31 @@
                <a href="#" target="_blank">&rarr; Reference Document Link</a>
             </p>
         </div>
+    </div>
+</div>
+
+<!-- Bottom Left Static Map Key / Legend -->
+<div id="map-legend">
+    <div class="legend-title">Map Legend</div>
+    <div class="legend-item">
+        <div class="legend-dot" style="background: #AC04DA;"></div>
+        <div class="legend-label">Personal Profile | Current Location</div>
+    </div>
+    <div class="legend-item">
+        <div class="legend-dot" style="background: transparent; border: 2px solid #AC04DA;"></div>
+        <div class="legend-label">Personal Profile | Historic Location</div>
+    </div>
+    <div class="legend-item">
+        <div class="legend-dot" style="background: #E8028B;"></div>
+        <div class="legend-label">Site Profile</div>
+    </div>
+    <div class="legend-item">
+        <div class="legend-dot" style="background: #F21517;"></div>
+        <div class="legend-label">Business Profile</div>
+    </div>
+    <div class="legend-item">
+        <div class="legend-dot" style="background: #F48428;"></div>
+        <div class="legend-label">Points of Interest</div>
     </div>
 </div>
 
@@ -515,7 +553,7 @@
             'paint': { 'line-color': '#d81b60', 'line-width': 1.5, 'line-dasharray': [3, 3], 'line-opacity': 0.6 }
         });
 
-        /* Updated Map Paint Properties matching the 5 Directory Categories & Historic Outlines */
+        // Map Paint Properties matching the Directory Categories & Historic Outlines
         map.addLayer({
             'id': 'network-points', 'type': 'circle', 'source': 'flower-network',
             'filter': ['!=', 'category', 'displacement-vector'], 
