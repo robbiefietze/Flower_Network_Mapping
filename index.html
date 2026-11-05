@@ -8,12 +8,9 @@
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js"></script>
     <style>
         body { margin: 0; padding: 0; font-family: 'Avenir Next', Avenir, 'Helvetica Neue', sans-serif; background-color: #ffffff; overflow: hidden; }
-        
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-        
         .mapboxgl-ctrl-bottom-left, .mapboxgl-ctrl-bottom-right { display: none !important; }
         
-        /* Top-Left Menu Styling */
         #menu-container { position: absolute; top: 20px; left: 20px; z-index: 100; font-family: 'Avenir Next', Avenir, 'Helvetica Neue', sans-serif; }
         #menu-btn {
             background: #ffffff; border: 1px solid #e0e0e0; padding: 10px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -35,9 +32,7 @@
         .menu-section h3 { margin: 0 0 8px 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #1e88e5; }
         .menu-section p { margin: 0; font-size: 12px; line-height: 1.5; color: #444; }
         .menu-section a { color: #1e88e5; text-decoration: none; font-weight: 500; }
-        .menu-section a:hover { text-decoration: underline; }
 
-        /* Bottom-Left Static Map Key Styling */
         #map-legend {
             position: absolute; bottom: 24px; left: 24px; z-index: 100;
             background: rgba(255, 255, 255, 0.95); border: 1px solid #e0e0e0;
@@ -48,6 +43,7 @@
         .legend-item { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
         .legend-item:last-child { margin-bottom: 0; }
         .legend-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+        .legend-line { width: 14px; height: 0; border-top: 2px dashed #000; flex-shrink: 0; }
         .legend-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: #111; }
 
         #side-panel {
@@ -59,59 +55,60 @@
         #side-panel.active { right: 0; }
         .panel-header { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: rgba(255, 255, 255, 0.95); z-index: 20; border-bottom: 1px solid #eee; }
         .back-btn { background: none; border: none; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: #1e88e5; cursor: pointer; display: none; padding: 0; }
-        .back-btn:hover { text-decoration: underline; }
         .close-btn { background: none; border: none; font-size: 28px; color: #888; cursor: pointer; line-height: 1; padding: 0; }
-        .close-btn:hover { color: #111; }
         #panel-content { padding: 32px; }
-        
+
+        /* Dynamic Image Containers */
+        .sheet-single-img-container { width: 100%; height: 260px; background: #f8f8f8; border-radius: 4px; margin-bottom: 24px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #eee; }
+        .sheet-image-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+        .sheet-image-grid-2 .sheet-img-wrapper { width: 100%; height: 220px; background: #f8f8f8; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid #eee; }
         .sheet-image-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 24px; }
-        .sheet-hero-img { width: 100%; height: 220px; background: #e0e0e0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: #777; text-transform: uppercase; letter-spacing: 1.5px; overflow: hidden; }
+        .sheet-hero-img { width: 100%; height: 220px; background: #f8f8f8; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid #eee; }
         .sheet-sub-stack { display: flex; flex-direction: column; gap: 12px; }
-        .sheet-thumb-img { width: 100%; height: 104px; background: #e0e0e0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; color: #777; text-transform: uppercase; letter-spacing: 1.5px; overflow: hidden; }
+        .sheet-thumb-img { width: 100%; height: 104px; background: #f8f8f8; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid #eee; }
+        .sheet-img-fit { width: 100%; height: 100%; object-fit: contain; background-color: #f8f8f8; }
 
         .sheet-title-area { margin-bottom: 28px; border-bottom: 1px solid #111; padding-bottom: 16px; }
         .sheet-title-area h2 { margin: 0 0 6px 0; font-size: 28px; font-weight: 500; letter-spacing: 1px; color: #111; }
         .sheet-subtitle { font-size: 14px; font-weight: 500; font-style: italic; letter-spacing: 1px; color: #666; margin: 0; }
         .sheet-body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
         .sheet-story-col h4 { margin: 0 0 12px 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: #111; }
-        .history-text { font-size: 13px; font-weight: 400; line-height: 1.6; color: #444; margin-bottom: 20px; white-space: pre-wrap; }
+        .history-text { font-size: 13px; font-weight: 400; line-height: 1.6; color: #444; margin-bottom: 16px; white-space: pre-wrap; }
+        
+        .quote-box { font-style: italic; border-left: 2px solid #1e88e5; padding-left: 14px; margin: 16px 0; color: #333; font-size: 13px; line-height: 1.6; background: #f9fbfd; padding-top: 8px; padding-bottom: 8px; }
 
         .audio-container { margin-top: 16px; padding: 14px; background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 4px; }
         .audio-container h5 { margin: 0 0 8px 0; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: #555; }
         audio { width: 100%; height: 36px; }
-
+        
         .sheet-meta-col { display: flex; flex-direction: column; gap: 20px; }
         .meta-block { border-bottom: 1px solid #e0e0e0; padding-bottom: 14px; }
-        .meta-block:last-child { border-bottom: none; }
         .meta-block h4 { margin: 0 0 6px 0; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: #888; }
         .meta-block p { margin: 0; font-size: 13px; font-weight: 400; line-height: 1.5; color: #222; }
-
+        
         .profile-data-group { margin-bottom: 24px; }
         .profile-data-group h4 { font-size: 12px; font-weight: 600; letter-spacing: 2px; color: #111; margin: 0 0 12px 0; border-bottom: 1px solid #111; padding-bottom: 6px; text-transform: uppercase; }
         .profile-data-row { display: flex; font-size: 12px; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 6px;}
-        .profile-data-label { flex: 0 0 140px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; font-size: 10px; padding-right: 12px; border-right: 1px solid #ddd; margin-right: 12px; display: flex; align-items: center;}
+        .profile-data-label { flex: 0 0 130px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; font-size: 10px; padding-right: 12px; border-right: 1px solid #ddd; margin-right: 12px; display: flex; align-items: center;}
         .profile-data-value { flex: 1; color: #222; font-weight: 500; line-height: 1.4; }
-
+        
         .profile-link { color: #1e88e5; text-decoration: none; font-weight: 600; cursor: pointer; }
         .profile-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
-<!-- Top Left Dropdown Menu -->
 <div id="menu-container">
     <button id="menu-btn" onclick="toggleMenu()">
         <span class="menu-text">MENU</span>
         <div class="hamburger">
-            <span></span>
-            <span></span>
-            <span></span>
+            <span></span><span></span><span></span>
         </div>
     </button>
-    <div id="menu-dropdown" class="menu-dropdown">
+    <div id="menu-dropdown">
         <div class="menu-section">
             <h3>1. WebMap Information</h3>
-            <p>A spatial research tool documenting the Cape Flower Trade Network, spatial histories of displacement, and agrarian restitution in Constantia[cite: 4].</p>
+            <p>A spatial research tool documenting the Cape Flower Trade Network, spatial histories of displacement, and agrarian restitution in Constantia.</p>
         </div>
         <div class="menu-section">
             <h3>2. Contact Details</h3>
@@ -119,7 +116,7 @@
         </div>
         <div class="menu-section">
             <h3>3. Readings & Links</h3>
-            <p>Explore related literature, project documentation, and group output works:<br>
+            <p>Explore related literature and project documentation:<br>
                <a href="#" target="_blank">&rarr; View Research Paper PDF</a><br>
                <a href="#" target="_blank">&rarr; Reference Document Link</a>
             </p>
@@ -127,33 +124,16 @@
     </div>
 </div>
 
-<!-- Bottom Left Static Map Key / Legend -->
 <div id="map-legend">
     <div class="legend-title">Map Legend</div>
-    <div class="legend-item">
-        <div class="legend-dot" style="background: #AC04DA;"></div>
-        <div class="legend-label">Personal Profile | Current Location</div>
-    </div>
-    <div class="legend-item">
-        <div class="legend-dot" style="background: transparent; border: 2px solid #AC04DA;"></div>
-        <div class="legend-label">Personal Profile | Historic Location</div>
-    </div>
-    <div class="legend-item">
-        <div class="legend-dot" style="background: #E8028B;"></div>
-        <div class="legend-label">Points of Interest</div>
-    </div>
-    <div class="legend-item">
-        <div class="legend-dot" style="background: #F21517;"></div>
-        <div class="legend-label">Business Profile</div>
-    </div>
-    <div class="legend-item">
-        <div class="legend-dot" style="background: #007cf5;"></div>
-        <div class="legend-label">Trade Route</div>
-    </div>
-    <div class="legend-item">
-        <div class="legend-dot" style="background: rgba(211,47,47,0.3); border: 1px dashed #d32f2f;"></div>
-        <div class="legend-label">Forced Removals Area</div>
-    </div>
+    <div class="legend-item"><div class="legend-dot" style="background: #AC04DA;"></div><div class="legend-label">Personal Profile | Current</div></div>
+    <div class="legend-item"><div class="legend-dot" style="background: transparent; border: 2px solid #AC04DA;"></div><div class="legend-label">Personal Profile | Historic</div></div>
+    <div class="legend-item"><div class="legend-dot" style="background: #ffb300;"></div><div class="legend-label">Points of Interest</div></div>
+    <div class="legend-item"><div class="legend-dot" style="background: #F21517;"></div><div class="legend-label">Business Profile</div></div>
+    <div class="legend-item"><div class="legend-line" style="border-top-color: #007cf5; border-top-style: dashed;"></div><div class="legend-label">Trade Route</div></div>
+    <div class="legend-item"><div class="legend-line" style="border-top-color: #d32f2f;"></div><div class="legend-label">Displacement Vector</div></div>
+    <div class="legend-item"><div class="legend-line" style="border-top-color: #4fc3f7;"></div><div class="legend-label">Commute Vector</div></div>
+    <div class="legend-item"><div class="legend-dot" style="background: rgba(211,47,47,0.18);"></div><div class="legend-label">Forced Removals Area</div></div>
 </div>
 
 <div id="map"></div>
@@ -181,63 +161,72 @@
 
     let currentSiteData = null;
 
-    function toggleMenu() {
-        const dropdown = document.getElementById('menu-dropdown');
-        dropdown.classList.toggle('active');
-    }
-
-    map.on('click', () => {
-        document.getElementById('menu-dropdown').classList.remove('active');
-    });
+    function toggleMenu() { document.getElementById('menu-dropdown').classList.toggle('active'); }
+    map.on('click', () => { document.getElementById('menu-dropdown').classList.remove('active'); });
 
     function closePanel() {
         document.getElementById('side-panel').classList.remove('active');
         document.getElementById('back-btn').style.display = 'none';
     }
 
+    function makeDirectLink(url) {
+        if (!url) return null;
+        let cleanLink = url.trim();
+        let idMatch = cleanLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+        return idMatch && idMatch[1] ? 'https://lh3.googleusercontent.com/d/' + idMatch[1] : cleanLink;
+    }
+
+    function buildImageGrid(props) {
+        let images = [];
+        if (props.profile_image) images.push(makeDirectLink(props.profile_image));
+        if (props.hero_image) images.push(makeDirectLink(props.hero_image));
+        if (props.archive_images) {
+            let arr = props.archive_images.split(',').map(s => makeDirectLink(s)).filter(Boolean);
+            arr.forEach(url => { if (!images.includes(url)) images.push(url); });
+        }
+        if (props.thumb_1 && !images.includes(makeDirectLink(props.thumb_1))) images.push(makeDirectLink(props.thumb_1));
+        if (props.thumb_2 && !images.includes(makeDirectLink(props.thumb_2))) images.push(makeDirectLink(props.thumb_2));
+
+        if (images.length === 0) return '';
+        if (images.length === 1) return `<div class="sheet-single-img-container"><img src="${images[0]}" class="sheet-img-fit" alt="Archive Photograph"></div>`;
+        if (images.length === 2) return `<div class="sheet-image-grid-2"><div class="sheet-img-wrapper"><img src="${images[0]}" class="sheet-img-fit" alt="Photograph 1"></div><div class="sheet-img-wrapper"><img src="${images[1]}" class="sheet-img-fit" alt="Photograph 2"></div></div>`;
+        
+        return `<div class="sheet-image-grid">
+                    <div class="sheet-hero-img"><img src="${images[0]}" class="sheet-img-fit" alt="Hero Photograph"></div>
+                    <div class="sheet-sub-stack">
+                        <div class="sheet-thumb-img"><img src="${images[1]}" class="sheet-img-fit" alt="Photograph 2"></div>
+                        <div class="sheet-thumb-img"><img src="${images[2]}" class="sheet-img-fit" alt="Photograph 3"></div>
+                    </div>
+                </div>`;
+    }
+
     function openCharlesProfile() {
         currentSiteData = document.getElementById('panel-content').innerHTML;
         document.getElementById('back-btn').style.display = 'block';
 
-        const charlesHTML = `
-            <div class="sheet-image-grid">
-                <div class="sheet-hero-img" style="background: #f8ecec;">[ Self Portrait ]</div>
-                <div class="sheet-sub-stack">
-                    <div class="sheet-thumb-img" style="background: #f8ecec;">[ Context Image 1 ]</div>
-                    <div class="sheet-thumb-img" style="background: #f8ecec;">[ Context Image 2 ]</div>
-                </div>
-            </div>
-            <div class="sheet-title-area">
-                <h2>Mr. Charles Jaftha</h2>
-                <p class="sheet-subtitle">Agricultural Flower Farmer</p>
-            </div>
+        let charlesProps = {
+            profile_image: 'https://drive.google.com/open?id=1vYCXQsQPMPYImD9l15BMO7n78_wwmqgk',
+            archive_images: 'https://drive.google.com/open?id=1CqISqHH7RUHzf60trAjKTyKLURUb3RAZ'
+        };
+
+        document.getElementById('panel-content').innerHTML = `
+            ${buildImageGrid(charlesProps)}
+            <div class="sheet-title-area"><h2>Mr. Charles Jaftha</h2><p class="sheet-subtitle">Agricultural Flower Farmer</p></div>
             <div class="sheet-body-grid">
                 <div class="sheet-story-col">
                     <h4>Short Story</h4>
-                    <p class="history-text">Charles Jaftha is the son of Moses Jaftha. Operating alongside his brother Malcolm, he continues the tradition of flower farming in Constantia. His work centers on preserving the history and heritage of the Constantia flower farming community through educational heritage walks, emphasizing that the public must understand the area's agrarian history.</p>
+                    <p class="history-text">Charles Jaftha is the son of Moses Jaftha. Operating alongside his brother Malcolm, he continues the tradition of flower farming in Constantia. His work centers on preserving the history and heritage of the Constantia flower farming community through educational heritage walks.</p>
                 </div>
                 <div class="sheet-meta-col">
                     <div class="profile-data-group">
                         <h4>Location Data</h4>
                         <div class="profile-data-row"><span class="profile-data-label">Historic Residence</span><span class="profile-data-value">Violet Lane, Constantia</span></div>
                         <div class="profile-data-row"><span class="profile-data-label">Current Residence</span><span class="profile-data-value">Parkwood</span></div>
-                        <div class="profile-data-row"><span class="profile-data-label">Place of Work</span><span class="profile-data-value">Jaftha's Flower Farm, Spaanschemat River Road</span></div>
-                    </div>
-                    <div class="profile-data-group">
-                        <h4>Trade Data</h4>
-                        <div class="profile-data-row"><span class="profile-data-label">Active Years</span><span class="profile-data-value">1972 – Current</span></div>
-                        <div class="profile-data-row"><span class="profile-data-label">Source / Suppliers</span><span class="profile-data-value">Soil for life etc.</span></div>
-                        <div class="profile-data-row"><span class="profile-data-label">Signature Flowers</span><span class="profile-data-value">Dahlia's, Water Lilies, Lupines, Dianthus</span></div>
-                    </div>
-                    <div class="profile-data-group">
-                        <h4>Relational Data</h4>
-                        <div class="profile-data-row"><span class="profile-data-label">Family Links</span><span class="profile-data-value">Moses Jaftha (Father), Malcom Jaftha (Brother)</span></div>
-                        <div class="profile-data-row"><span class="profile-data-label">Age</span><span class="profile-data-value">-</span></div>
+                        <div class="profile-data-row"><span class="profile-data-label">Place of Work</span><span class="profile-data-value">Jaftha's Flower Farm</span></div>
                     </div>
                 </div>
             </div>
         `;
-        document.getElementById('panel-content').innerHTML = charlesHTML;
         document.getElementById('side-panel').scrollTop = 0;
     }
 
@@ -250,8 +239,24 @@
     }
 
     map.on('load', () => {
-        
-        // 1, 2 & 3. Polygon Data Sources (Historic Lanes, Markets, Forced Removals)
+        // 1. Spatial Crop Mask Layer
+        map.addSource('mask-source', {
+            'type': 'geojson',
+            'data': {
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [
+                        [[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]],
+                        [[18.26, -33.89], [18.84, -33.89], [18.84, -34.38], [18.26, -34.38], [18.26, -33.89]]
+                    ]
+                }
+            }
+        });
+        map.addLayer({ 'id': 'mask-layer', 'type': 'fill', 'source': 'mask-source', 'paint': { 'fill-color': '#ffffff', 'fill-opacity': 1.0 } });
+        map.addLayer({ 'id': 'mask-outline', 'type': 'line', 'source': 'mask-source', 'paint': { 'line-color': '#e0e0e0', 'line-width': 1 } });
+
+        // 2. High-Precision Polygon Geometry (Direct KML Coordinates for Removals & Historic Zones)
         map.addSource('historic-zones', {
             'type': 'geojson',
             'data': {
@@ -259,90 +264,39 @@
                 'features': [
                     {
                         'type': 'Feature',
-                        'properties': { 'name': 'Strawberry Lane Settlement', 'zone': 'strawberry', 'desc': 'A vibrant pre-Apartheid smallholding community where families practiced subsistence farming, raised livestock, and grew cut flowers.' },
-                        'geometry': {
-                            'type': 'Polygon',
-                            'coordinates': [[
-                                [18.436927, -34.032587], [18.436655, -34.032879], [18.436535, -34.033617], [18.436089, -34.034353],
-                                [18.436328, -34.034713], [18.437797, -34.037121], [18.439426, -34.040350], [18.440676, -34.041402],
-                                [18.442153, -34.043266], [18.444173, -34.044385], [18.445077, -34.044168], [18.444317, -34.042452],
-                                [18.444123, -34.040987], [18.443465, -34.040648], [18.442960, -34.038583], [18.442498, -34.037654],
-                                [18.442244, -34.037263], [18.441806, -34.036024], [18.441523, -34.035165], [18.441008, -34.034083],
-                                [18.440865, -34.033560], [18.440460, -34.032848], [18.440339, -34.032421], [18.439951, -34.031503],
-                                [18.440063, -34.031163], [18.439927, -34.030760], [18.439433, -34.030356], [18.436927, -34.032587]
-                            ]]
-                        }
+                        'properties': { 
+                            'name': 'Strawberry Lane Settlement', 'zone': 'strawberry', 
+                            'desc': 'A vibrant pre-Apartheid smallholding community where families practiced subsistence farming, raised livestock, and grew cut flowers.',
+                            'hero_image': 'https://drive.google.com/open?id=1UIJFMxxsdOwBCqPQCBkX8hMT2cD6A1gv',
+                            'thumb_1': 'https://drive.google.com/open?id=1iLdJZIPXGvbsVI_7dhqgDElgacoRaqX2',
+                            'thumb_2': 'https://drive.google.com/open?id=1yrqNMfSKAynBYeOEfbS0n9-7Qd2pkDgw'
+                        },
+                        'geometry': { 'type': 'Polygon', 'coordinates': [[[18.436927, -34.032587], [18.436655, -34.032879], [18.436535, -34.033617], [18.436089, -34.034353], [18.436328, -34.034713], [18.437797, -34.037121], [18.439426, -34.040350], [18.440676, -34.041402], [18.442153, -34.043266], [18.444173, -34.044385], [18.445077, -34.044168], [18.444317, -34.042452], [18.444123, -34.040987], [18.443465, -34.040648], [18.442960, -34.038583], [18.442498, -34.037654], [18.442244, -34.037263], [18.441806, -34.036024], [18.441523, -34.035165], [18.441008, -34.034083], [18.440865, -34.033560], [18.440460, -34.032848], [18.440339, -34.032421], [18.439951, -34.031503], [18.440063, -34.031163], [18.439927, -34.030760], [18.439433, -34.030356], [18.436927, -34.032587]]] }
                     },
                     {
                         'type': 'Feature',
-                        'properties': { 'name': 'Violet Lane Settlement', 'zone': 'violet', 'desc': 'An intensely cultivated residential and agricultural lane home to families who specialized in growing seasonal cut flowers.' },
-                        'geometry': {
-                            'type': 'Polygon',
-                            'coordinates': [[
-                                [18.439475, -34.030351], [18.439954, -34.030741], [18.440085, -34.031156], [18.439981, -34.031524],
-                                [18.440364, -34.032409], [18.440663, -34.033139], [18.440889, -34.033549], [18.441030, -34.034076],
-                                [18.441058, -34.034142], [18.441547, -34.035159], [18.442257, -34.037227], [18.442992, -34.038572],
-                                [18.443490, -34.040592], [18.444037, -34.040887], [18.444845, -34.040917], [18.444874, -34.040147],
-                                [18.44480, -34.039118], [18.44288, -34.037681], [18.444287, -34.037332], [18.444349, -34.036327],
-                                [18.444624, -34.035530], [18.445237, -34.035017], [18.446215, -34.034666], [18.444949, -34.032552],
-                                [18.443435, -34.030151], [18.442714, -34.030440], [18.441814, -34.030374], [18.440162, -34.030177],
-                                [18.439475, -34.030351]
-                            ]]
-                        }
+                        'properties': { 
+                            'name': 'Violet Lane Settlement', 'zone': 'violet', 
+                            'desc': 'An intensely cultivated residential and agricultural lane home to families who specialized in growing seasonal cut flowers.',
+                            'hero_image': 'https://drive.google.com/open?id=1YLZ5LiGTWnc-Z2_8Vnr5N-CNrys_8bnx',
+                            'thumb_1': 'https://drive.google.com/open?id=144i48bQs5dRrDnGkIgXIRg3muo-Zw9Eg',
+                            'thumb_2': 'https://drive.google.com/open?id=1FTJLhgTgyBvnJ0ez-3at4qEh-wDrfLGQ'
+                        },
+                        'geometry': { 'type': 'Polygon', 'coordinates': [[[18.439475, -34.030351], [18.439954, -34.030741], [18.440085, -34.031156], [18.439981, -34.031524], [18.440364, -34.032409], [18.440663, -34.033139], [18.440889, -34.033549], [18.441030, -34.034076], [18.441058, -34.034142], [18.441547, -34.035159], [18.442257, -34.037227], [18.442992, -34.038572], [18.443490, -34.040592], [18.444037, -34.040887], [18.444845, -34.040917], [18.444874, -34.040147], [18.444480, -34.039118], [18.442880, -34.037681], [18.444287, -34.037332], [18.444349, -34.036327], [18.444624, -34.035530], [18.445237, -34.035017], [18.446215, -34.034666], [18.444949, -34.032552], [18.443435, -34.030151], [18.442714, -34.030440], [18.441814, -34.030374], [18.440162, -34.030177], [18.439475, -34.030351]]] }
                     },
                     {
                         'type': 'Feature',
-                        'properties': { 'name': "Jaftha's Flower Farm", 'zone': 'jaftha-farm', 'desc': 'Traditional outdoor flower farming, seed-banking, and hosting memory work with CHEP.' },
-                        'geometry': {
-                            'type': 'Polygon',
-                            'coordinates': [[
-                                [18.438889, -34.029812], [18.439309, -34.029509], [18.439138, -34.028590],
-                                [18.438162, -34.028770], [18.437922, -34.028970], [18.438889, -34.029812]
-                            ]]
-                        }
+                        'properties': { 'name': "Jaftha's Flower Farm", 'zone': 'jaftha-farm' },
+                        'geometry': { 'type': 'Polygon', 'coordinates': [[[18.438889, -34.029812], [18.439309, -34.029509], [18.439138, -34.028590], [18.438162, -34.028770], [18.437922, -34.028970], [18.438889, -34.029812]]] }
                     },
                     {
                         'type': 'Feature',
-                        'properties': { 'name': 'Adderley Street Flower Market', 'zone': 'market', 'desc': 'Historic urban market operating continuously since the 1880s at Trafalgar Place.' },
-                        'geometry': {
-                            'type': 'Polygon',
-                            'coordinates': [[
-                                [18.422216, -33.923080], [18.422122, -33.923171], [18.422682, -33.923574],
-                                [18.422756, -33.923504], [18.422216, -33.923080]
-                            ]]
-                        }
-                    },
-                    {
-                        'type': 'Feature',
-                        'properties': { 'name': 'New Oranjezicht Market', 'zone': 'market', 'desc': 'Modern urban agroecology hub at Granger Bay.' },
-                        'geometry': {
-                            'type': 'Polygon',
-                            'coordinates': [[
-                                [18.418079, -33.902463], [18.417186, -33.903062], [18.417561, -33.903424],
-                                [18.418434, -33.902802], [18.418079, -33.902463]
-                            ]]
-                        }
-                    },
-                    {
-                        'type': 'Feature',
-                        'properties': { 'name': 'Old Oranjezicht Market', 'zone': 'market', 'desc': 'Historic agricultural market estate on Table Mountain slopes.' },
-                        'geometry': {
-                            'type': 'Polygon',
-                            'coordinates': [[
-                                [18.414666, -33.902349], [18.415392, -33.902694], [18.415600, -33.902373],
-                                [18.414775, -33.901949], [18.414452, -33.902183], [18.414666, -33.902349]
-                            ]]
-                        }
-                    },
-                    // Forced Removals Polygons
-                    {
-                        'type': 'Feature',
-                        'properties': { 'name': 'Diep River', 'zone': 'forced-removal', 'desc': 'Forced Removals township relocation zone where displaced Constantia residents were resettled under apartheid.' },
+                        'properties': { 'name': 'Diep River', 'zone': 'forced-removal', 'desc': 'Forced Removals township relocation zone.' },
                         'geometry': { 'type': 'Polygon', 'coordinates': [[[18.465951, -34.028520], [18.462563, -34.028247], [18.462375, -34.029014], [18.461108, -34.028883], [18.461203, -34.027974], [18.460047, -34.027883], [18.460733, -34.034238], [18.460821, -34.036524], [18.461504, -34.042319], [18.463813, -34.042729], [18.466308, -34.042989], [18.466263, -34.039533], [18.466377, -34.037464], [18.467385, -34.033958], [18.467850, -34.032554], [18.468458, -34.031401], [18.468073, -34.030023], [18.465757, -34.030020], [18.465951, -34.028520]]] }
                     },
                     {
                         'type': 'Feature',
-                        'properties': { 'name': 'Retreat', 'zone': 'forced-removal', 'desc': 'Forced Removals relocation zone for displaced agricultural workers.' },
+                        'properties': { 'name': 'Retreat', 'zone': 'forced-removal', 'desc': 'Forced Removals relocation zone.' },
                         'geometry': { 'type': 'Polygon', 'coordinates': [[[18.463648, -34.069240], [18.468801, -34.069077], [18.468896, -34.070400], [18.473815, -34.070253], [18.473884, -34.075330], [18.478718, -34.075005], [18.484463, -34.066968], [18.488782, -34.061032], [18.488225, -34.054498], [18.485515, -34.056147], [18.473982, -34.057893], [18.473386, -34.058039], [18.472286, -34.057606], [18.466453, -34.058792], [18.466303, -34.059458], [18.463618, -34.059469], [18.463648, -34.069240]]] }
                     },
                     {
@@ -352,22 +306,22 @@
                     },
                     {
                         'type': 'Feature',
-                        'properties': { 'name': 'Grassy Park', 'zone': 'forced-removal', 'desc': 'Cape Flats relocation township under Group Areas Act disestablishment.' },
+                        'properties': { 'name': 'Grassy Park', 'zone': 'forced-removal', 'desc': 'Cape Flats relocation township.' },
                         'geometry': { 'type': 'Polygon', 'coordinates': [[[18.491914, -34.057554], [18.493012, -34.058680], [18.497034, -34.056239], [18.499142, -34.058261], [18.513751, -34.048472], [18.502186, -34.036180], [18.501227, -34.036380], [18.487519, -34.045603], [18.487252, -34.046984], [18.489046, -34.059241], [18.491914, -34.057554]]] }
                     },
                     {
                         'type': 'Feature',
-                        'properties': { 'name': 'Lotus River', 'zone': 'forced-removal', 'desc': 'Cape Flats township relocation vector for Constantia flower farming families.' },
+                        'properties': { 'name': 'Lotus River', 'zone': 'forced-removal', 'desc': 'Cape Flats township relocation vector.' },
                         'geometry': { 'type': 'Polygon', 'coordinates': [[[18.513897, -34.048574], [18.514670, -34.048141], [18.518998, -34.047575], [18.522792, -34.064940], [18.526527, -34.064757], [18.526782, -34.065219], [18.531450, -34.064825], [18.524991, -34.032225], [18.505049, -34.034923], [18.502323, -34.036168], [18.513897, -34.048574]]] }
                     },
                     {
                         'type': 'Feature',
-                        'properties': { 'name': 'Parkwood', 'zone': 'forced-removal', 'desc': 'Primary relocation township where key farming families including the Jafthas were relocated post-1960s.' },
+                        'properties': { 'name': 'Parkwood', 'zone': 'forced-removal', 'desc': 'Primary relocation township.' },
                         'geometry': { 'type': 'Polygon', 'coordinates': [[[18.502025, -34.036008], [18.505135, -34.034769], [18.504705, -34.032043], [18.503352, -34.028004], [18.502135, -34.026869], [18.501855, -34.026074], [18.497857, -34.026047], [18.496380, -34.026716], [18.495935, -34.025864], [18.496897, -34.025162], [18.494451, -34.015101], [18.489011, -34.025701], [18.490345, -34.028944], [18.491307, -34.031596], [18.492363, -34.034259], [18.492175, -34.037479], [18.493973, -34.041129], [18.498594, -34.038028], [18.501339, -34.036187], [18.502025, -34.036008]]] }
                     },
                     {
                         'type': 'Feature',
-                        'properties': { 'name': 'Lavender Hill', 'zone': 'forced-removal', 'desc': 'Peripheral relocation township established under Group Areas Act.' },
+                        'properties': { 'name': 'Lavender Hill', 'zone': 'forced-removal', 'desc': 'Peripheral relocation township.' },
                         'geometry': { 'type': 'Polygon', 'coordinates': [[[18.479505, -34.076291], [18.479638, -34.078344], [18.481963, -34.078120], [18.481893, -34.079250], [18.481619, -34.079770], [18.484445, -34.080335], [18.486513, -34.080368], [18.486460, -34.079127], [18.493917, -34.078663], [18.494062, -34.080178], [18.495261, -34.080023], [18.496288, -34.078494], [18.496337, -34.076126], [18.494205, -34.071122], [18.491698, -34.067590], [18.492189, -34.067315], [18.489423, -34.063138], [18.488144, -34.063696], [18.487407, -34.063574], [18.486799, -34.064149], [18.480110, -34.073830], [18.479684, -34.075107], [18.479505, -34.076291]]] }
                     },
                     {
@@ -379,42 +333,32 @@
             }
         });
 
-        // Polygon Fill Layer
         map.addLayer({
             'id': 'historic-zones-fill', 'type': 'fill', 'source': 'historic-zones',
             'paint': {
                 'fill-color': [
                     'match', ['get', 'zone'],
-                    'strawberry', '#ff4d4d',
+                    'strawberry', '#ff69b4',
                     'violet', '#7b1fa2',
                     'jaftha-farm', '#26a7ff',
                     'market', '#ffb300',
                     'forced-removal', '#d32f2f',
                     '#cccccc'
                 ],
-                'fill-opacity': [
-                    'match', ['get', 'zone'],
-                    'forced-removal', 0.18,
-                    'strawberry', 0.22,
-                    'violet', 0.22,
-                    'jaftha-farm', 0.25,
-                    'market', 0.22,
-                    0.20
-                ]
+                'fill-opacity': ['match', ['get', 'zone'], 'forced-removal', 0.18, 0.28]
             }
         });
 
-        // Polygon Outline Layer
         map.addLayer({
             'id': 'historic-zones-line', 'type': 'line', 'source': 'historic-zones',
             'paint': {
                 'line-color': [
                     'match', ['get', 'zone'],
-                    'strawberry', '#d32f2f',
+                    'strawberry', '#e91e63',
                     'violet', '#512da8',
                     'jaftha-farm', '#007cf5',
                     'market', '#ff8f00',
-                    'forced-removal', '#d32f2f',
+                    'forced-removal', 'transparent', // No border for Forced Removals
                     '#cccccc'
                 ],
                 'line-width': 2,
@@ -422,245 +366,383 @@
             }
         });
 
-        // 5. Corrected Spatial Mask Layer (Safe Web Mercator Bounds at Lat +/-85)
-        map.addSource('mask-source', {
-            'type': 'geojson',
-            'data': {
-                'type': 'Feature',
-                'geometry': {
-                    'type': 'Polygon',
-                    'coordinates': [
-                        [[-180, -85], [-180, 85], [180, 85], [180, -85], [-180, -85]],
-                        [[18.26, -34.38], [18.84, -34.38], [18.84, -33.89], [18.26, -33.89], [18.26, -34.38]]
-                    ]
-                }
-            }
-        });
-        map.addLayer({ 'id': 'mask-layer', 'type': 'fill', 'source': 'mask-source', 'paint': { 'fill-color': '#ffffff', 'fill-opacity': 1.0 } });
-        map.addLayer({ 'id': 'mask-outline', 'type': 'line', 'source': 'mask-source', 'paint': { 'line-color': '#e0e0e0', 'line-width': 1 } });
-
-        // Network Data Source (Points & Vector Lines)
+        // 3. Network Data (Direct KML Trade Routes, Vectors, POIs)
         map.addSource('flower-network', {
             type: 'geojson',
             data: {
                 "type": "FeatureCollection",
                 "features": [
-                    // 4. Displacement Vectors
+                    // Displacement Vectors (Historic to Current)
+                    { 
+                        "type": "Feature", 
+                        "geometry": { "type": "LineString", "coordinates": [[18.442722, -34.034806], [18.497000, -34.028000]] }, 
+                        "properties": { "category": "displacement-vector", "name": "Charles Jaftha Displacement Vector", "subtitle": "Violet Lane to Parkwood" } 
+                    },
+                    { 
+                        "type": "Feature", 
+                        "geometry": { "type": "LineString", "coordinates": [[18.436900, -34.032500], [18.516000, -34.048000]] }, 
+                        "properties": { "category": "displacement-vector", "name": "Mama G Displacement Vector", "subtitle": "Strawberry Lane to Lotus River" } 
+                    },
+                    { 
+                        "type": "Feature", 
+                        "geometry": { "type": "LineString", "coordinates": [[18.438600, -34.029200], [18.500000, -34.047000]] }, 
+                        "properties": { "category": "displacement-vector", "name": "Aunty Delhia Displacement Vector", "subtitle": "Constantia to Grassy Park" } 
+                    },
+
+                    // Commute Vectors (Work to Current)
+                    { 
+                        "type": "Feature", 
+                        "geometry": { "type": "LineString", "coordinates": [[18.422300, -33.923150], [18.516000, -34.048000]] }, 
+                        "properties": { "category": "commute-vector", "name": "Mama G Commute Vector", "subtitle": "Adderley Street Market to Lotus River" } 
+                    },
+                    { 
+                        "type": "Feature", 
+                        "geometry": { "type": "LineString", "coordinates": [[18.422550, -33.923450], [18.500000, -34.047000]] }, 
+                        "properties": { "category": "commute-vector", "name": "Aunty Delhia Commute Vector", "subtitle": "Adderley Street Market to Grassy Park" } 
+                    },
+                    { 
+                        "type": "Feature", 
+                        "geometry": { "type": "LineString", "coordinates": [[18.438600, -34.029200], [18.497000, -34.028000]] }, 
+                        "properties": { "category": "commute-vector", "name": "Charles Jaftha Commute Vector", "subtitle": "Jaftha's Farm to Parkwood" } 
+                    },
+
+                    // Primary Trade Route (Exact KML Coordinates)
                     {
                         "type": "Feature",
-                        "geometry": { "type": "LineString", "coordinates": [[18.442722, -34.034806], [18.497361, -34.030278]] },
-                        "properties": { "category": "displacement-vector", "name": "Charles Jaftha Displacement Vector", "subtitle": "Violet Lane to Parkwood" }
+                        "geometry": { 
+                            "type": "LineString", 
+                            "coordinates": [
+                                [18.436700, -34.193479], [18.434025, -34.193346], [18.432680, -34.193421], [18.431190, -34.193141],
+                                [18.429371, -34.193078], [18.427410, -34.191897], [18.426284, -34.190087], [18.425482, -34.188122],
+                                [18.424792, -34.184331], [18.425344, -34.179824], [18.426595, -34.175564], [18.427950, -34.172501],
+                                [18.429754, -34.170271], [18.431312, -34.166984], [18.431600, -34.163089], [18.430611, -34.161362],
+                                [18.431734, -34.158511], [18.434116, -34.157172], [18.436269, -34.155169], [18.437806, -34.153167],
+                                [18.439138, -34.151729], [18.439658, -34.149709], [18.439131, -34.147807], [18.437760, -34.145755],
+                                [18.436863, -34.144169], [18.435290, -34.143544], [18.433794, -34.142469], [18.429915, -34.141449],
+                                [18.429848, -34.140798], [18.432193, -34.135547], [18.432573, -34.135007], [18.435268, -34.133289],
+                                [18.438690, -34.131635], [18.440429, -34.131710], [18.441652, -34.132131], [18.443805, -34.132443],
+                                [18.445360, -34.132316], [18.446476, -34.132101], [18.447896, -34.130323], [18.448090, -34.129391],
+                                [18.447741, -34.128135], [18.448897, -34.126764], [18.451731, -34.124434], [18.453492, -34.122849],
+                                [18.453726, -34.122296], [18.455595, -34.120952], [18.458822, -34.118504], [18.462184, -34.115971],
+                                [18.463330, -34.115296], [18.463993, -34.114660], [18.465671, -34.113529], [18.466596, -34.111304],
+                                [18.467279, -34.110079], [18.467813, -34.108651], [18.467978, -34.104847], [18.468247, -34.101085],
+                                [18.467780, -34.099088], [18.467156, -34.096754], [18.464978, -34.093841], [18.462704, -34.091610],
+                                [18.459111, -34.087932], [18.456648, -34.085071], [18.455527, -34.083515], [18.456549, -34.077718],
+                                [18.458779, -34.065920], [18.442118, -34.063316], [18.435754, -34.062271], [18.433492, -34.061925],
+                                [18.433642, -34.060741], [18.433265, -34.059705], [18.429517, -34.056128], [18.426687, -34.053340],
+                                [18.424361, -34.051037], [18.423846, -34.050329], [18.423695, -34.049746], [18.423806, -34.049185],
+                                [18.424125, -34.048534], [18.425141, -34.047724], [18.426992, -34.046156], [18.429018, -34.044550],
+                                [18.430152, -34.043527], [18.430891, -34.042895], [18.431743, -34.041232], [18.432252, -34.040265],
+                                [18.433511, -34.037856], [18.434159, -34.036484], [18.434667, -34.035382], [18.435567, -34.034545],
+                                [18.436169, -34.033803], [18.436525, -34.032926], [18.437191, -34.032102], [18.438710, -34.030828],
+                                [18.439658, -34.030158], [18.440662, -34.030117], [18.442142, -34.030323], [18.443109, -34.030243],
+                                [18.443577, -34.029618], [18.444232, -34.028008], [18.445623, -34.023317], [18.446577, -34.020217],
+                                [18.446631, -34.019728], [18.448260, -34.018975], [18.448969, -34.018119], [18.450305, -34.016248],
+                                [18.451462, -34.014733], [18.452300, -34.014061], [18.453744, -34.013646], [18.458045, -34.013768],
+                                [18.460640, -34.013953], [18.461453, -34.013985], [18.461729, -34.010305], [18.461964, -34.008636],
+                                [18.461999, -34.007072], [18.461951, -34.005248], [18.461560, -34.003804], [18.461021, -34.002684],
+                                [18.459186, -34.000945], [18.459814, -34.000245], [18.464897, -33.997820], [18.468648, -33.995699],
+                                [18.468962, -33.995255], [18.469156, -33.993446], [18.468958, -33.992362], [18.468373, -33.991682],
+                                [18.467425, -33.990614], [18.466912, -33.989970], [18.466475, -33.987919], [18.465986, -33.985648],
+                                [18.464454, -33.973721], [18.466085, -33.969234], [18.467794, -33.964906], [18.468608, -33.963373],
+                                [18.469669, -33.962400], [18.469954, -33.961415], [18.470062, -33.960277], [18.470766, -33.959065],
+                                [18.471218, -33.956932], [18.471825, -33.954882], [18.472059, -33.953303], [18.471959, -33.951191],
+                                [18.471910, -33.950062], [18.471604, -33.949001], [18.469177, -33.944131], [18.466618, -33.940746],
+                                [18.463808, -33.937642], [18.460511, -33.934917], [18.456416, -33.932042], [18.455335, -33.931247],
+                                [18.451401, -33.929939], [18.445250, -33.928519], [18.440221, -33.927612], [18.429587, -33.927278],
+                                [18.428171, -33.927115], [18.426928, -33.927422], [18.421758, -33.923517]
+                            ] 
+                        },
+                        "properties": { "category": "TRADE ROUTE", "name": "Primary Trade Route", "subtitle": "TRADE ROUTE", "italic_desc": "Stretched all the way from Simonstown - Fishhoek - Kalk bay - Muizenberg - through the Winelands to Strawberry Lane.\n\nFrom Strawberry Lane flower sellers were distributed in Wynberg, Newlands (Were they would often replenish water at the Spring) continue to Rondebosch", "location_text": "Simon's Town to Cape Town CBD (M4 Axis)", "activity_text": "Primary floral supply and distribution route.", "dates_text": "1880s – Present", "people_list": "Constantia flower sellers, harvesters, and city peddlers." }
                     },
+                    
+                    // Secondary Trade Route (Exact KML Coordinates)
                     {
                         "type": "Feature",
-                        "geometry": { "type": "LineString", "coordinates": [[18.8400, -33.9355], [18.4201, -33.9355]] },
-                        "properties": { "category": "displacement-vector", "name": "Robert Fietze Research Vector", "subtitle": "Eastern Cape to Cape Town" }
+                        "geometry": { 
+                            "type": "LineString", 
+                            "coordinates": [
+                                [18.349130, -34.046070], [18.350359, -34.045056], [18.350716, -34.044442], [18.351070, -34.044033],
+                                [18.352258, -34.043921], [18.353244, -34.043461], [18.355548, -34.042155], [18.356420, -34.041810],
+                                [18.357394, -34.041672], [18.359111, -34.041818], [18.359415, -34.041675], [18.359197, -34.040340],
+                                [18.357711, -34.037619], [18.356511, -34.035449], [18.356355, -34.033627], [18.356493, -34.029755],
+                                [18.357102, -34.028286], [18.357939, -34.026824], [18.358845, -34.025924], [18.361128, -34.024870],
+                                [18.362803, -34.023687], [18.365026, -34.022458], [18.366302, -34.021968], [18.371460, -34.020324],
+                                [18.373124, -34.019692], [18.374155, -34.019464], [18.374886, -34.019055], [18.376558, -34.018878],
+                                [18.378298, -34.018097], [18.379205, -34.018082], [18.380063, -34.017578], [18.382243, -34.016148],
+                                [18.382692, -34.015802], [18.384407, -34.015016], [18.386273, -34.014332], [18.388046, -34.013991],
+                                [18.389740, -34.012567], [18.390906, -34.011484], [18.390999, -34.010963], [18.391332, -34.010583],
+                                [18.392255, -34.010499], [18.392880, -34.010789], [18.393242, -34.011481], [18.393429, -34.011896],
+                                [18.393940, -34.012165], [18.394744, -34.011912], [18.395268, -34.011669], [18.396035, -34.011571],
+                                [18.396763, -34.011159], [18.397754, -34.010976], [18.398612, -34.011366], [18.400506, -34.012113],
+                                [18.401371, -34.012156], [18.402503, -34.012020], [18.403571, -34.011907], [18.404873, -34.011870],
+                                [18.405922, -34.011802], [18.407429, -34.011252], [18.408037, -34.011041], [18.408690, -34.010591],
+                                [18.409053, -34.010105], [18.409631, -34.009887], [18.410361, -34.010068], [18.410915, -34.010244],
+                                [18.412032, -34.010431], [18.414333, -34.010860], [18.415517, -34.011489], [18.416215, -34.012263],
+                                [18.416378, -34.012910], [18.415950, -34.013430], [18.415481, -34.014011], [18.415004, -34.014783],
+                                [18.415339, -34.015127], [18.416047, -34.015385], [18.416701, -34.015532], [18.417256, -34.015908],
+                                [18.417625, -34.016849], [18.417810, -34.017473], [18.418006, -34.017955], [18.418359, -34.018416],
+                                [18.418791, -34.018966], [18.419292, -34.019471], [18.419604, -34.019894], [18.420165, -34.020717],
+                                [18.420924, -34.021032], [18.421744, -34.021274], [18.422910, -34.021537], [18.423890, -34.021744],
+                                [18.425216, -34.022079], [18.426172, -34.022379], [18.427055, -34.022588], [18.427965, -34.022842],
+                                [18.428830, -34.023119], [18.429572, -34.023332], [18.430012, -34.023532], [18.430717, -34.024076],
+                                [18.431107, -34.024453], [18.431720, -34.024823], [18.432426, -34.025003], [18.433047, -34.025059],
+                                [18.433324, -34.025087], [18.433590, -34.025809], [18.433915, -34.026843], [18.434021, -34.027104],
+                                [18.434297, -34.027213], [18.434860, -34.027175], [18.435567, -34.027018], [18.435892, -34.026875],
+                                [18.436370, -34.027395], [18.436719, -34.027796], [18.436987, -34.028065], [18.437260, -34.028291],
+                                [18.437482, -34.028547], [18.437625, -34.028822], [18.438287, -34.029371], [18.438990, -34.029961],
+                                [18.439411, -34.030339], [18.439477, -34.030366]
+                            ] 
+                        },
+                        "properties": { "category": "TRADE ROUTE", "name": "Secondary Trade Route", "subtitle": "TRADE ROUTE", "italic_desc": "This route Stretched from Strawberry Lane, transporting flowers through to Hout Bay via the Constantia Main Road over Constantia Nek", "location_text": "Constantia Valley to Hout Bay", "activity_text": "Cross-mountain flower trade and local distribution." }
                     },
+
                     // Personal Profiles
                     {
                         "type": "Feature",
                         "geometry": { "type": "Point", "coordinates": [18.442722, -34.034806] },
                         "properties": {
-                            "category": "personal-profile-historic",
-                            "name": "Mr. Charles Jaftha",
-                            "subtitle": "Agricultural Flower Farmer",
-                            "story": "Charles Jaftha is the son of Moses Jaftha. Operating alongside his brother Malcolm, he continues the tradition of flower farming in Constantia.",
-                            "hist_res": "Violet Lane, Constantia", "curr_res": "Parkwood", "workplace": "Jaftha's Flower Farm, Spaanschemat River Road",
-                            "family_links": "Moses Jaftha (Father), Malcom Jaftha (Brother)", "age": "-", "active": "1972 – Current", "suppliers": "Soil for life etc.", "flowers": "Dahlia's, Water Lilies, Lupines, Dianthus"
+                            "category": "personal-profile-historic", "name": "Mr. Charles Jaftha", "subtitle": "Agricultural Flower Farmer",
+                            "story": "Charles Jaftha is the son of Moses Jaftha. Operating alongside his brother Malcolm, he continues flower farming traditions in Constantia.",
+                            "hist_res": "Violet Lane, Constantia", "curr_res": "Parkwood", "workplace": "Jaftha's Flower Farm", "family_links": "Moses Jaftha (Father), Malcolm Jaftha (Brother)",
+                            "profile_image": "https://drive.google.com/open?id=1vYCXQsQPMPYImD9l15BMO7n78_wwmqgk", "archive_images": "https://drive.google.com/open?id=1CqISqHH7RUHzf60trAjKTyKLURUb3RAZ"
                         }
                     },
                     {
                         "type": "Feature",
-                        "geometry": { "type": "Point", "coordinates": [18.497361, -34.030278] },
+                        "geometry": { "type": "Point", "coordinates": [18.497000, -34.028000] },
                         "properties": {
-                            "category": "personal-profile",
-                            "name": "Mr. Charles Jaftha",
-                            "subtitle": "Agricultural Flower Farmer",
-                            "story": "Charles Jaftha is the son of Moses Jaftha. Operating alongside his brother Malcolm, he continues the tradition of flower farming in Constantia.",
-                            "hist_res": "Violet Lane, Constantia", "curr_res": "Parkwood", "workplace": "Jaftha's Flower Farm, Spaanschemat River Road",
-                            "family_links": "Moses Jaftha (Father), Malcom Jaftha (Brother)", "age": "-", "active": "1972 – Current", "suppliers": "Soil for life etc.", "flowers": "Dahlia's, Water Lilies, Lupines, Dianthus"
+                            "category": "personal-profile", "name": "Mr. Charles Jaftha", "subtitle": "Agricultural Flower Farmer",
+                            "story": "Charles Jaftha is the son of Moses Jaftha. Operating alongside his brother Malcolm, he continues flower farming traditions in Constantia.",
+                            "hist_res": "Violet Lane, Constantia", "curr_res": "Parkwood", "workplace": "Jaftha's Flower Farm", "family_links": "Moses Jaftha (Father), Malcolm Jaftha (Brother)",
+                            "profile_image": "https://drive.google.com/open?id=1vYCXQsQPMPYImD9l15BMO7n78_wwmqgk", "archive_images": "https://drive.google.com/open?id=1CqISqHH7RUHzf60trAjKTyKLURUb3RAZ"
                         }
                     },
                     {
                         "type": "Feature",
-                        "geometry": { "type": "Point", "coordinates": [18.8400, -33.9355] },
+                        "geometry": { "type": "Point", "coordinates": [18.422300, -33.923150] },
                         "properties": {
-                            "category": "personal-profile-historic",
-                            "name": "Mr. Robert Fietze",
-                            "subtitle": "Researcher",
-                            "story": "Completed as part of architectural research at the University of Cape Town, this profile documents the methodological framework and spatial investigation into the Cape Flower Trade Network.",
-                            "hist_res": "Glen Thorn Farm, Tylden, Eastern Cape", "curr_res": "Schoonder street, Gardens, Cape Town", "workplace": "University of Cape Town",
-                            "family_links": "-", "age": "-", "active": "-", "suppliers": "-", "flowers": "-",
-                            "profile_image": "https://drive.google.com/open?id=17KODvXtkDQEdzy0C748TdSteSjqUtPc8",
-                            "archive_images": "https://drive.google.com/open?id=1Ia99W_ov8pUC7RW12AHDEzT673RRFLEc, https://drive.google.com/open?id=1awiXCQQ4wLGM3MCtRLSC3RXKZ9eMDOnw",
-                            "has_audio": "yes"
+                            "category": "personal-profile", "name": "Gairoenisa Olivier (Mama G)", "subtitle": "3rd-Generation Flower Seller & Florist",
+                            "story": "Gairoenisa Olivier started selling flowers alongside her mother at age 10. Beyond her market stall on Adderley Street, she is actively involved in arranging custom floral design for funerals, weddings, corporate events, and birthday parties. Sightseeing tours and visiting international tourists represent her largest client base.",
+                            "quote": "It's nice to be around the flowers - I thank God that I can come here every day and do such beautiful work. You know, people come here with their problems, and we try to help them with those problems.",
+                            "hist_res": "Strawberry Lane, Constantia", "curr_res": "Lotus River", "workplace": "Adderley Street Flower Market",
+                            "active": "Started age 10 (3rd Generation)", "age": "47 Years Old", "flowers": "Roses (Imported from Kenya)", "family_links": "Mother (Flower Seller)",
+                            "profile_image": "https://drive.google.com/open?id=1c6SQSaCpms4LBGPzNyE-82ObAgJOPf_s", "archive_images": "https://drive.google.com/open?id=1QpW4N-tELcmJNP6BWJLJrL_cZYGyHqnQ"
                         }
                     },
                     {
                         "type": "Feature",
-                        "geometry": { "type": "Point", "coordinates": [18.4201, -33.9355] },
+                        "geometry": { "type": "Point", "coordinates": [18.422420, -33.923300] },
                         "properties": {
-                            "category": "personal-profile",
-                            "name": "Mr. Robert Fietze",
-                            "subtitle": "Researcher",
-                            "story": "Completed as part of architectural research at the University of Cape Town, this profile documents the methodological framework and spatial investigation into the Cape Flower Trade Network.",
-                            "hist_res": "Glen Thorn Farm, Tylden, Eastern Cape", "curr_res": "Schoonder street, Gardens, Cape Town", "workplace": "University of Cape Town",
-                            "family_links": "-", "age": "-", "active": "-", "suppliers": "-", "flowers": "-",
-                            "profile_image": "https://drive.google.com/open?id=17KODvXtkDQEdzy0C748TdSteSjqUtPc8",
-                            "archive_images": "https://drive.google.com/open?id=1Ia99W_ov8pUC7RW12AHDEzT673RRFLEc, https://drive.google.com/open?id=1awiXCQQ4wLGM3MCtRLSC3RXKZ9eMDOnw",
-                            "has_audio": "yes"
+                            "category": "personal-profile", "name": "Alison Snyders & Karen Lipari", "subtitle": "4th-Generation Flower Sellers ('Sisters on Adderley')",
+                            "story": "Sisters Alison Snyders and Karen Lipari began coming to work at Adderley Street Flower Market with their grandmother when they were just 8 and 9 years old. Carrying forward a 4th-generation lineage of flower sellers originally rooted in Constantia, they operate stalls at both Adderley Street and the Oranjezicht Market.",
+                            "hist_res": "Constantia", "curr_res": "Cape Town", "workplace": "Adderley Street Market & Oranjezicht Market",
+                            "active": "Started ages 8 & 9 (4th Generation)", "family_links": "Grandmother (Market Florist)",
+                            "profile_image": "https://drive.google.com/open?id=1alUhqILORuo2QQScxTbC8hPSVkP-0WDB", "archive_images": "https://drive.google.com/open?id=19wPl5-UfAptSwbYbPNnkwHwFZqYCk-p1"
                         }
                     },
-                    // Points of Interest & Business Profiles
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [18.422550, -33.923450] },
+                        "properties": {
+                            "category": "personal-profile", "name": "Faldeiah Williams (Gamildien)", "subtitle": "Flower Seller & Grower ('Aunty Delhia')",
+                            "story": "Faldeiah Williams began coming to the flower market with her mother as a young child, fondly remembering sleeping wrapped up in a blanket inside a wooden banana crate under the market tables. Her parents grew up in Constantia, and the Williams family has been farming and selling cut flowers across Cape Town for the past 170 years.",
+                            "quote": "Here you can learn everything at the market, my love.",
+                            "hist_res": "Constantia", "curr_res": "Grassy Park", "workplace": "Adderley Street Flower Market",
+                            "active": "Childhood – Present (170-Year Family Legacy)", "family_links": "Mother & Parents (Constantia Flower Farmers & Sellers)",
+                            "profile_image": "https://drive.google.com/open?id=1OWyCbzj05oK6ePKfKi8VpslCBsQANbgE", "archive_images": "https://drive.google.com/open?id=1B3ZNy8ViyqLeedNZVG74Xi3S9McMkifx"
+                        }
+                    },
+
+                    // Businesses & KML POIs
                     {
                         "type": "Feature",
                         "geometry": { "type": "Point", "coordinates": [18.440105, -34.034880] },
-                        "properties": {
-                            "category": "POINTS OF INTEREST",
-                            "name": "Old Coloured Primary School",
-                            "subtitle": "POINTS OF INTEREST",
-                            "italic_desc": "The 'Old School Building' was the Coloured Primary School where many of the Displaced Agricultural Community of Constantia went to school.",
-                            "location_text": "Strawberry Lane / Violet Lane Enclave, Constantia",
-                            "activity_text": "Educational and community life for the displaced agricultural families.",
-                            "dates_text": "Pre-Group Areas Act Era",
-                            "people_list": "Local agricultural and displaced community youth and teachers."
-                        }
+                        "properties": { "category": "POINTS OF INTEREST", "name": "Old Coloured Primary School", "subtitle": "POINTS OF INTEREST", "italic_desc": "The 'Old School Building' was the Coloured Primary School where many of the Displaced Agricultural Community of Constantia went to school.", "location_text": "Strawberry / Violet Lane", "activity_text": "Education & community gathering.", "dates_text": "Pre-Group Areas Act" }
                     },
                     {
                         "type": "Feature",
                         "geometry": { "type": "Point", "coordinates": [18.4386, -34.0292] },
-                        "properties": {
-                            "category": "BUSINESS PROFILE",
-                            "name": "Jaftha's Flower Farm",
-                            "subtitle": "BUSINESS PROFILE",
-                            "italic_desc": "Traditional outdoor flower farming, seed-banking, and hosting memory work with CHEP.",
-                            "location_text": "Jaftha Flower Farm (Spaanschemat River plot, Constantia)",
-                            "activity_text": "Cultivating and growing flowers (dahlias, freesias, lupines) and trading with Adderley Street market.",
-                            "dates_text": "Pre-1960s (Historic) / Returned 1980s – Present",
-                            "people_list": '<span class="profile-link" onclick="openCharlesProfile()">Charles Jaftha</span> (Owner), Malcom Jaftha (Owner), Moses Jaftha (Founder)'
+                        "properties": { 
+                            "category": "BUSINESS PROFILE", "name": "Jaftha's Flower Farm", "subtitle": "BUSINESS PROFILE", "italic_desc": "Outdoor flower farming plot and center for local memory work.", "location_text": "Spaanschemat River Road", "activity_text": "Flower cultivation & seed banking.", "dates_text": "1980s – Present", "people_list": '<span class="profile-link" onclick="openCharlesProfile()">Charles Jaftha</span>, Malcolm Jaftha',
+                            "hero_image": "https://drive.google.com/open?id=1NomOR9k_qfJOYwBJZQaXPqwd0hHZCu_6", "thumb_1": "https://drive.google.com/open?id=1pCRxSjon6FzuMptF1xOU6WsNjPFgE0Db", "thumb_2": "https://drive.google.com/open?id=1i_75dkOYSVQmU4AOxuft_UypPPFnuMnE"
                         }
                     },
                     {
                         "type": "Feature",
-                        "geometry": { "type": "Point", "coordinates": [18.4224, -33.9233] },
-                        "properties": {
-                            "category": "BUSINESS PROFILE",
-                            "name": "Adderley Street Flower Market",
-                            "subtitle": "BUSINESS PROFILE",
-                            "italic_desc": "One of Cape Town's oldest running cultural institutions, operating continuously since the 1880s at Trafalgar Place.",
-                            "location_text": "Trafalgar Place, Adderley Street, Central Cape Town",
-                            "activity_text": "Retail and wholesale trade of local 'small flowers', fynbos, and seasonal arrangements.",
-                            "dates_text": "1880s – Present Day",
-                            "people_list": "Generations of independent vendors and family-run trading stalls."
+                        "geometry": { "type": "Point", "coordinates": [18.42221, -33.92329] },
+                        "properties": { 
+                            "category": "BUSINESS PROFILE", "name": "Adderley Street Flower Market", "subtitle": "BUSINESS PROFILE", 
+                            "italic_desc": "Historic flower market operating continuously since circa 1888 at Trafalgar Place along Adderley Street.", 
+                            "history": "<b>Land Trust & Origins:</b>\nIn 1888, Archdeacon Thomas Fothergill Lightfoot of St George's Cathedral established a Land Trust and formal permit agreement for the flower sellers. This gifted the vendors a recognized legal sanctuary to sell cut flowers at Trafalgar Place without harassment from municipal authorities.\n\n<b>Operational Timeline:</b>\nThe market has operated continuously since 1888, serving as the central urban nexus for generations of rural Constantia, Cape Flats, and Table Mountain flower growers.\n\n<b>Heritage Protection:</b>\nRecognized for its living cultural heritage, spatial resilience, and century-old floral trade, the market site was officially declared a Provincial / National Heritage Site under the National Heritage Resources Act (NHRA Act 25 of 1999).",
+                            "location_text": "Trafalgar Place, Adderley Street, Cape Town CBD", "activity_text": "Cut flower retail, floristry, and community gathering.", "dates_text": "1888 – Present (Declared Heritage Site under NHRA)", "people_list": "Archdeacon Thomas Lightfoot (Land Trust Founder), Constantia & Cape Flats flower sellers.",
+                            "hero_image": "https://drive.google.com/open?id=1vP1a4id3jA5LsjGl42luUCy8AA9HuGx1", "thumb_1": "https://drive.google.com/open?id=1iM_ugjbAXTa6un5QA--2k1aeQNdGPoli", "thumb_2": "https://drive.google.com/open?id=1KsnIYQ3a24fQ2zCdQ88HGcVVKGwGqSsS"
                         }
                     },
                     {
                         "type": "Feature",
                         "geometry": { "type": "Point", "coordinates": [18.439375, -34.029912] },
-                        "properties": {
-                            "category": "BUSINESS PROFILE",
-                            "name": "OLD CAPE FARM STALL",
-                            "subtitle": "BUSINESS PROFILE (Peddlars)",
-                            "italic_desc": "Formerly a local farmstall where Moses Jaftha secured employment as a butcher after returning to the valley in the 1980s.",
-                            "location_text": "Spaanschemat River Road, Constantia",
-                            "activity_text": "Local agricultural trade and community employment foothold.",
-                            "dates_text": "Mid to Late 20th Century – Present",
-                            "people_list": "Constantia farming community workers and traders."
-                        }
+                        "properties": { "category": "BUSINESS PROFILE", "name": "OLD CAPE FARM STALL", "subtitle": "BUSINESS PROFILE (Peddlars)", "italic_desc": "Former local farmstall where Moses Jaftha secured employment as a butcher after returning to the valley in the 1980s.", "location_text": "Spaanschemat River Road", "activity_text": "Commerce & butchery." }
                     },
                     {
                         "type": "Feature",
                         "geometry": { "type": "Point", "coordinates": [18.415642, -34.038269] },
-                        "properties": {
-                            "category": "POINTS OF INTEREST",
-                            "name": "Kramat of Sheikh Abdurahman Matebe Shah",
-                            "subtitle": "POINTS OF INTEREST",
-                            "italic_desc": "A historic Muslim shrine and site of deep cultural and spiritual significance located adjacent to the Klein Constantia estate.",
-                            "location_text": "Klein Constantia Gate, Constantia",
-                            "activity_text": "Spiritual gathering, heritage preservation, and cultural continuity.",
-                            "dates_text": "Historic Era – Present",
-                            "people_list": "Regional spiritual custodians and heritage visitors."
+                        "properties": { 
+                            "category": "POINTS OF INTEREST", "name": "Kramat of Sheikh Abdurahman Matebe Shah", "subtitle": "POINTS OF INTEREST", "italic_desc": "A historic Muslim shrine and site of deep cultural and spiritual significance located adjacent to the Klein Constantia estate. It anchors the long-standing multicultural, indigenous, and spiritual layers of the Constantia valley that predated colonial land appropriation.", "location_text": "Klein Constantia Gate", "activity_text": "Spiritual shrine.", "dates_text": "Historic Era", "people_list": "Spiritual custodians.",
+                            "hero_image": "https://drive.google.com/open?id=1GisYibEUUnH4Sl5DWg6fDl7T-oH8OuYS"
                         }
                     },
                     {
                         "type": "Feature",
                         "geometry": { "type": "Point", "coordinates": [18.430365, -34.024575] },
-                        "properties": {
-                            "category": "POINTS OF INTEREST",
-                            "name": "Old Constantia High School (Coloured)",
-                            "subtitle": "POINTS OF INTEREST",
-                            "italic_desc": "Many of the displaced Agricultural Coloured Community of Constantia attended this High-School.",
-                            "location_text": "Constantia Valley",
-                            "activity_text": "Secondary education for the community prior to forced removals.",
-                            "dates_text": "Pre-Group Areas Act",
-                            "people_list": "Displaced Constantia youth and academic staff."
-                        }
+                        "properties": { "category": "POINTS OF INTEREST", "name": "Old Constantia High School (Coloured)", "subtitle": "POINTS OF INTEREST", "italic_desc": "Many of the displaced Agricultural Coloured Community of Constantia attended this High-School.", "location_text": "Constantia", "activity_text": "Education.", "dates_text": "Pre-Removals", "people_list": "Local students." }
                     },
                     {
                         "type": "Feature",
                         "geometry": { "type": "Point", "coordinates": [18.432256, -34.025116] },
-                        "properties": {
-                            "category": "POINTS OF INTEREST",
-                            "name": "Old Constantia Police Station",
-                            "subtitle": "POINTS OF INTEREST",
-                            "italic_desc": "Before becoming the Police Station this was the Old Post-Office.",
-                            "location_text": "Constantia",
-                            "activity_text": "Local civil administration and community landmark.",
-                            "dates_text": "Historic Community Era",
-                            "people_list": "Constantia residents and civil officials."
+                        "properties": { 
+                            "category": "POINTS OF INTEREST", "name": "Old Constantia Police Station", "subtitle": "POINTS OF INTEREST", "italic_desc": "The joke amongst the Displaced Coloured Community of Constantia is that the Police Station closed down because there wasn't 'enough' crime in the area. Before becoming the Police Station this was the Old Post-Office.", "location_text": "Constantia", "activity_text": "Civil post.", "dates_text": "Historic Era", "people_list": "Local residents.",
+                            "hero_image": "https://drive.google.com/open?id=1C0vfJrO-AaUBF6LSmW7SugIRA3fBAKvj", "thumb_1": "https://drive.google.com/open?id=1ZOZ9S_6SydtKWCKSHAd0bPvYwoBNbMDe"
                         }
                     },
                     {
                         "type": "Feature",
                         "geometry": { "type": "Point", "coordinates": [18.431455, -34.024829] },
-                        "properties": {
-                            "category": "POINTS OF INTEREST",
-                            "name": "Abbas Store (Oubas)",
-                            "subtitle": "POINTS OF INTEREST",
-                            "italic_desc": "This was a local fruit and vegetable shop owned by an Indian Family who lived in the area.",
-                            "location_text": "Constantia",
-                            "activity_text": "Local retail, provisions, and neighborhood commerce.",
-                            "dates_text": "Pre-Removals Era",
-                            "people_list": "Abbas family and local farming patrons."
-                        }
+                        "properties": { "category": "POINTS OF INTEREST", "name": "Abbas Store (Oubas)", "subtitle": "POINTS OF INTEREST", "italic_desc": "This was a local fruit and vegetable shop owned by an Indian Family who lived in the area.", "location_text": "Constantia", "activity_text": "Local market commerce.", "dates_text": "Pre-Removals", "people_list": "Abbas family." }
                     },
                     {
                         "type": "Feature",
                         "geometry": { "type": "Point", "coordinates": [18.439737, -34.015887] },
-                        "properties": {
-                            "category": "POINTS OF INTEREST",
-                            "name": "Coloured Christian Cemetery",
-                            "subtitle": "POINTS OF INTEREST",
-                            "italic_desc": "Christian Cemetery where many relatives of the Displaced families are buried.",
-                            "location_text": "Constantia / Wynberg Border",
-                            "activity_text": "Interment, ancestral remembrance, and genealogical heritage.",
-                            "dates_text": "Historic to Present",
-                            "people_list": "Displaced Constantia families and ancestors."
-                        }
-                    },
-                    // Trade Routes
-                    {
-                        "type": "Feature",
-                        "geometry": { 
-                            "type": "LineString", 
-                            "coordinates": [
-                                [18.436700, -34.193479], [18.434025, -34.193346], [18.432680, -34.193421], [18.431190, -34.193141], [18.429371, -34.193078], [18.427410, -34.191897], [18.426284, -34.190087], [18.425482, -34.188122], [18.424792, -34.184331], [18.425344, -34.179824], [18.426595, -34.175564], [18.427950, -34.172501], [18.429754, -34.170271], [18.431312, -34.166984], [18.431600, -34.163089], [18.430611, -34.161362], [18.431734, -34.158511], [18.434116, -34.157172], [18.436269, -34.155169], [18.437806, -34.153167], [18.439138, -34.151729], [18.439658, -34.149709], [18.439131, -34.147807], [18.437760, -34.145755], [18.436863, -34.144169], [18.435290, -34.143544], [18.433794, -34.142469], [18.429915, -34.141449], [18.429848, -34.140798], [18.432193, -34.135547], [18.432573, -34.135007], [18.435268, -34.133289], [18.438690, -34.131635], [18.440429, -34.131710], [18.441652, -34.132131], [18.443805, -34.132443], [18.445360, -34.132316], [18.446476, -34.132101], [18.447896, -34.130323], [18.448090, -34.129391], [18.447741, -34.128135], [18.448897, -34.126764], [18.451731, -34.124434], [18.453492, -34.122849], [18.453726, -34.122296], [18.455595, -34.120952], [18.458822, -34.118504], [18.462184, -34.115971], [18.463330, -34.115296], [18.463993, -34.114660], [18.465671, -34.113529], [18.466596, -34.111304], [18.467279, -34.110079], [18.467813, -34.108651], [18.467978, -34.104847], [18.468247, -34.101085], [18.467780, -34.099088], [18.467156, -34.096754], [18.464978, -34.093841], [18.462704, -34.091610], [18.459111, -34.087932], [18.456648, -34.085071], [18.455527, -34.083515], [18.456549, -34.077718], [18.458779, -34.065920], [18.442118, -34.063316], [18.435754, -34.062271], [18.433492, -34.061925], [18.433642, -34.060741], [18.433265, -34.059705], [18.429517, -34.056128], [18.426687, -34.053340], [18.424361, -34.051037], [18.423846, -34.050329], [18.423695, -34.049746], [18.423806, -34.049185], [18.424125, -34.048534], [18.425141, -34.047724], [18.426992, -34.046156], [18.429018, -34.044550], [18.430152, -34.043527], [18.430891, -34.042895], [18.431743, -34.041232], [18.432252, -34.040265], [18.433511, -34.037856], [18.434159, -34.036484], [18.434667, -34.035382], [18.435566, -34.034545], [18.436169, -34.033803], [18.436525, -34.032926], [18.437191, -34.032102], [18.438710, -34.030828], [18.439658, -34.030158], [18.440662, -34.030117], [18.442142, -34.030323], [18.443109, -34.030243], [18.443577, -34.029618], [18.444232, -34.028008], [18.445623, -34.023317], [18.446577, -34.020217], [18.446631, -34.019728], [18.448260, -34.018975], [18.448969, -34.018119], [18.450305, -34.016248], [18.451462, -34.014733], [18.452300, -34.014061], [18.453744, -34.013646], [18.458045, -34.013768], [18.460640, -34.013953], [18.461453, -34.013985], [18.461729, -34.010305], [18.461964, -34.008636], [18.461999, -34.007072], [18.461951, -34.005248], [18.461560, -34.003804], [18.461021, -34.002684], [18.459186, -34.000945], [18.459814, -34.000245], [18.464897, -33.997820], [18.468648, -33.995699], [18.468962, -33.995255], [18.469156, -33.993446], [18.468958, -33.992362], [18.468373, -33.991682], [18.467425, -33.990614], [18.466912, -33.989970], [18.466475, -33.987919], [18.465986, -33.985648], [18.464454, -33.973721], [18.466085, -33.969234], [18.467794, -33.964906], [18.468608, -33.963373], [18.469669, -33.962400], [18.469954, -33.961415], [18.470062, -33.960277], [18.470766, -33.959065], [18.471218, -33.956932], [18.471825, -33.954882], [18.472059, -33.953303], [18.471959, -33.951191], [18.471910, -33.950062], [18.471604, -33.949001], [18.469177, -33.944131], [18.466618, -33.940746], [18.463808, -33.937642], [18.460511, -33.934917], [18.456416, -33.932042], [18.455335, -33.931247], [18.451401, -33.929939], [18.445250, -33.928519], [18.440221, -33.927612], [18.429587, -33.927278], [18.428171, -33.927115], [18.426928, -33.927422], [18.421758, -33.923517]
-                            ] 
-                        },
-                        "properties": { 
-                            "category": "TRADE ROUTE",
-                            "name": "Primary Trade Route",
-                            "subtitle": "TRADE ROUTE",
-                            "italic_desc": "Stretched all the way from Simonstown - Fishhoek - Kalk bay - Muizenberg - through the Winelands to Strawberry Lane. From Strawberry Lane flower sellers were distributed in Wynberg, Newlands (Where they would often replenish water at the Spring) continue to Rondebosch",
-                            "location_text": "Simonstown to Rondebosch via Strawberry Lane",
-                            "activity_text": "Bulk floral distribution, vendor transit, and market supply routes.",
-                            "dates_text": "Historic Trade Era",
-                            "people_list": "Constantia flower sellers and regional vendors."
-                        }
+                        "properties": { "category": "POINTS OF INTEREST", "name": "Coloured Christian Cemetery", "subtitle": "POINTS OF INTEREST", "italic_desc": "Christian Cemetery where many relatives of the Displaced families are buried. This cemetery was only for coloured burials.", "location_text": "Constantia/Wynberg", "activity_text": "Remembrance.", "dates_text": "Historic to Present", "people_list": "Constantia ancestors." }
                     },
                     {
                         "type": "Feature",
-                        "geometry": { 
-                            "type": "LineString", 
-                            "coordinates": [
-                                [18.349130, -34.046070], [18.350359, -34.045056], [18.350716, -34.044442], [18.351070, -34.044033], [18.352258, -34.043921], [18.353244, -34.043461], [18.355548, -34.042155], [18.356420, -34.041810], [18.357394, -34.041672], [18.359111, -34.041818], [18.359415, -34.041675], [18.359197, -34.040340], [18.357711, -34.037619], [18.356511, -34.035449], [18.356355, -34.033627], [18.356493, -34.029755], [18.357102, -34.028286], [18.357939, -34.026824], [18.358845, -34.025924], [18.361128, -34.024870], [18.362803, -34.023687], [18.365026, -34.022458], [18.366302, -34.021968], [18.371460, -34.020324], [18.373124, -34.019692], [18.374155, -34.019464], [18.374886, -34.019055], [18.376558, -34.018878], [18.378298, -34.018097], [18.379205, -34.018082], [18.380063, -34.017578], [18.382243, -34.016148], [18.382692, -34.015802], [18.384407, -34.015016], [18.386273, -34.014332], [18.388046, -34.013991], [18.389740, -34.012567], [18.390906, -34.011484], [18.390999, -34.010963], [18.391332, -34.010583], [18.392255, -34.010499], [18.392880, -34.010789], [18.393242, -34.011481], [18.393429, -34.011896], [18.393940, -34.012165], [18.394744, -34.011912], [18.395268, -34.011669], [18.396035, -34.011571], [18.396763, -34.011159], [18.397754, -34.010976],
+                        "geometry": { "type": "Point", "coordinates": [18.439280, -34.021298] },
+                        "properties": { "category": "POINTS OF INTEREST", "name": "Christ Church Constantia (ACSA)", "subtitle": "POINTS OF INTEREST", "italic_desc": "Historic Anglican church location.", "location_text": "Constantia" }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [18.438432, -34.031709] },
+                        "properties": { "category": "POINTS OF INTEREST", "name": "Spaanchemat River Muslim Cemetery", "subtitle": "POINTS OF INTEREST", "italic_desc": "Historic Muslim Cemetery.", "location_text": "Constantia" }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [18.443209, -34.036979] },
+                        "properties": { "category": "POINTS OF INTEREST", "name": "Jaftha's Family Farm (Prior to Forced Removals)", "subtitle": "POINTS OF INTEREST", "italic_desc": "Historic site of the Jaftha family farm before displacement.", "location_text": "Violet Lane, Constantia" }
+                    }
+                ]
+            }
+        });
+
+        // Add 01. Displacement Lines (Red Dotted)
+        map.addLayer({
+            'id': 'displacement-lines', 'type': 'line', 'source': 'flower-network',
+            'filter': ['==', 'category', 'displacement-vector'],
+            'paint': { 'line-color': '#d32f2f', 'line-width': 2, 'line-dasharray': [2, 2], 'line-opacity': 0.8 }
+        });
+
+        // Add 01. Commute/Work Lines (Light Blue Dotted)
+        map.addLayer({
+            'id': 'commute-lines', 'type': 'line', 'source': 'flower-network',
+            'filter': ['==', 'category', 'commute-vector'],
+            'paint': { 'line-color': '#4fc3f7', 'line-width': 2, 'line-dasharray': [2, 2], 'line-opacity': 0.8 }
+        });
+
+        map.addLayer({
+            'id': 'trade-routes', 'type': 'line', 'source': 'flower-network',
+            'filter': ['==', 'category', 'TRADE ROUTE'],
+            'paint': { 'line-color': '#007cf5', 'line-width': 3, 'line-dasharray': [4, 2], 'line-opacity': 0.85 }
+        });
+
+        // Points
+        map.addLayer({
+            'id': 'network-points', 'type': 'circle', 'source': 'flower-network',
+            'filter': ['==', ['geometry-type'], 'Point'],
+            'paint': {
+                'circle-radius': 8,
+                'circle-color': [
+                    'match', ['get', 'category'],
+                    'personal-profile', '#AC04DA',
+                    'personal-profile-historic', 'transparent',
+                    'POINTS OF INTEREST', '#ffb300',
+                    'BUSINESS PROFILE', '#F21517',
+                    '#cccccc'
+                ],
+                'circle-stroke-width': ['match', ['get', 'category'], 'personal-profile-historic', 2, 0],
+                'circle-stroke-color': ['match', ['get', 'category'], 'personal-profile-historic', '#AC04DA', 'transparent']
+            }
+        });
+
+        // Click Handlers
+        map.on('click', 'historic-zones-fill', (e) => {
+            const props = e.features[0].properties;
+            if (props.zone === 'forced-removal') return;
+
+            document.getElementById('panel-content').innerHTML = `
+                ${buildImageGrid(props)}
+                <div class="sheet-title-area"><h2>${props.name}</h2><p class="sheet-subtitle">HISTORIC SPATIAL ZONE</p></div>
+                <div class="sheet-body-grid">
+                    <div class="sheet-story-col"><h4>Spatial Significance</h4><div class="history-text">${props.desc}</div></div>
+                    <div class="sheet-meta-col"><div class="meta-block"><h4>Classification</h4><p>Historic Agrarian / Market Node</p></div></div>
+                </div>
+            `;
+            document.getElementById('side-panel').classList.add('active');
+        });
+
+        map.on('click', 'network-points', (e) => {
+            const coordinates = e.features[0].geometry.coordinates.slice();
+            const props = e.features[0].properties;
+            map.flyTo({ center: coordinates, speed: 1.2, offset: [-200, 0] });
+            document.getElementById('back-btn').style.display = 'none';
+
+            let panelHTML = '';
+            let imageMarkup = buildImageGrid(props);
+
+            if (props.category.startsWith('personal-profile')) {
+                let quoteMarkup = props.quote ? `<div class="quote-box">"${props.quote}"</div>` : '';
+                let rowsHTML = '';
+                if (props.hist_res) rowsHTML += `<div class="profile-data-row"><span class="profile-data-label">Historic Origin</span><span class="profile-data-value">${props.hist_res}</span></div>`;
+                if (props.curr_res) rowsHTML += `<div class="profile-data-row"><span class="profile-data-label">Current Residence</span><span class="profile-data-value">${props.curr_res}</span></div>`;
+                if (props.workplace) rowsHTML += `<div class="profile-data-row"><span class="profile-data-label">Place of Work</span><span class="profile-data-value">${props.workplace}</span></div>`;
+                if (props.active) rowsHTML += `<div class="profile-data-row"><span class="profile-data-label">Generation</span><span class="profile-data-value">${props.active}</span></div>`;
+                if (props.flowers) rowsHTML += `<div class="profile-data-row"><span class="profile-data-label">Signature Flowers</span><span class="profile-data-value">${props.flowers}</span></div>`;
+                
+                panelHTML = `
+                    ${imageMarkup}
+                    <div class="sheet-title-area"><h2>${props.name}</h2><p class="sheet-subtitle">${props.subtitle}</p></div>
+                    <div class="sheet-body-grid">
+                        <div class="sheet-story-col"><h4>Short Story</h4><p class="history-text">${props.story}</p>${quoteMarkup}</div>
+                        <div class="sheet-meta-col"><div class="profile-data-group"><h4>Profile Details</h4>${rowsHTML}</div></div>
+                    </div>
+                `;
+            } else {
+                let historyMarkup = props.history ? `<div style="margin-top:24px;"><h4>Market History & Heritage</h4><div class="history-text">${props.history}</div></div>` : '';
+
+                panelHTML = `
+                    ${imageMarkup}
+                    <div class="sheet-title-area"><h2>${props.name}</h2><p class="sheet-subtitle">${props.subtitle}</p></div>
+                    <div class="sheet-body-grid">
+                        <div class="sheet-story-col">
+                            <h4>Significance & Description</h4><div class="history-text">${props.italic_desc}</div>
+                            ${historyMarkup}
+                        </div>
+                        <div class="sheet-meta-col">
+                            <div class="meta-block"><h4>Location</h4><p>${props.location_text || 'N/A'}</p></div>
+                            ${props.activity_text ? `<div class="meta-block"><h4>Activity</h4><p>${props.activity_text}</p></div>` : ''}
+                            ${props.dates_text ? `<div class="meta-block"><h4>Dates</h4><p>${props.dates_text}</p></div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            document.getElementById('panel-content').innerHTML = panelHTML;
+            document.getElementById('side-panel').classList.add('active');
+            currentSiteData = panelHTML;
+        });
+
+        map.on('mouseenter', 'network-points', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'network-points', () => { map.getCanvas().style.cursor = ''; });
+    });
+</script>
+
+</body>
+</html>
